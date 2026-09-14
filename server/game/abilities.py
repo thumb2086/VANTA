@@ -1300,3 +1300,588 @@ def lookup_agent(key: str) -> tuple[str, list[IAbility]] | None:
     if key in AGENTS:
         return AGENTS[key]
     return GENERATED_AGENTS.get(key)
+
+
+# ====================================================================== #
+# Enhanced Ability Effect Implementations
+# ====================================================================== #
+# The cast() methods above handle projectile spawning, deployable creation,
+# and status application. The classes below add EFFECT EVENT emission for
+# client-side visual rendering, and enhanced world-effect integration.
+# ====================================================================== #
+
+class AbilityEffectEvent:
+    """Data payload sent to clients for rendering ability effects."""
+
+    def __init__(self, effect_type: str, **kwargs):
+        self.effect_type = effect_type
+        self.data = kwargs
+
+    def to_dict(self) -> dict:
+        return {"effect": self.effect_type, **self.data}
+
+
+class AbilityEffectManager:
+    """Manages active ability effects in the world (smokes, zones, walls).
+
+    Attached to the World. Handles duration, damage ticks, and cleanup.
+    """
+
+    def __init__(self):
+        self.active_zones: list[_AbilityZone] = []
+        self.pending_events: list[AbilityEffectEvent] = []
+
+    def add_zone(self, zone: _AbilityZone) -> None:
+        self.active_zones.append(zone)
+
+    def emit_event(self, event: AbilityEffectEvent) -> None:
+        self.pending_events.append(event)
+
+    def update(self, dt: float, world) -> list[dict]:
+        """Tick all active zones, return pending events for network broadcast."""
+        events = []
+        for zone in self.active_zones:
+            zone.update(dt, world)
+            if zone.expired:
+                zone.on_expire(world)
+            else:
+                events.append(zone.event_dict())
+        self.active_zones = [z for z in self.active_zones if not z.expired]
+        # Collect effect events
+        for ev in self.pending_events:
+            events.append(ev.to_dict())
+        self.pending_events.clear()
+        return events
+
+    def clear(self) -> None:
+        self.active_zones.clear()
+        self.pending_events.clear()
+
+
+class _AbilityZone:
+    """Base class for persistent ability effects in the world."""
+
+    def __init__(self, center: Vec3, radius: float, duration: float, team: int):
+        self.center = center
+        self.radius = radius
+        self.duration = duration
+        self.time_left = duration
+        self.team = team
+        self.expired = False
+
+    def update(self, dt: float, world) -> None:
+        self.time_left -= dt
+        if self.time_left <= 0.0:
+            self.expired = True
+
+    def on_expire(self, world) -> None:
+        pass
+
+    def event_dict(self) -> dict:
+        return {}
+
+
+# ─── Jett Enhanced Effects ─────────────────────────────────────
+
+class _JettSmokeZone(_AbilityZone):
+    """Cloudburst smoke cloud — blocks LOS, fades out at end."""
+
+    def __init__(self, center: Vec3, radius: float, duration: float, team: int):
+        super().__init__(center, radius, duration, team)
+        self.cloud = SmokeCloud(center, radius, duration, None)
+
+    def update(self, dt: float, world) -> None:
+        super().update(dt, world)
+        self.cloud.time_left = self.time_left
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "smoke",
+            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "radius": self.radius,
+            "time_left": self.time_left,
+            "team": self.team,
+        }
+
+
+class _JettDashTrail(_AbilityZone):
+    """Tailwind dash trail — visual line from origin to destination."""
+
+    def __init__(self, origin: Vec3, dest: Vec3, team: int):
+        duration = 0.8
+        super().__init__(origin, origin.distance_to(dest), duration, team)
+        self.dest = dest
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "teleport",
+            "from": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "to": {"x": self.dest.x, "y": self.dest.y, "z": self.dest.z},
+            "duration": self.time_left,
+        }
+
+
+class _JettKnifeBarrage(_AbilityZone):
+    """Blade Storm — knife trail particles at origin."""
+
+    def __init__(self, origin: Vec3, direction: Vec3, team: int):
+        super().__init__(origin, 1.0, 0.5, team)
+        self.direction = direction
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "frag",
+            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "radius": self.radius,
+        }
+
+
+# ─── Sage Enhanced Effects ─────────────────────────────────────
+
+class _SageSlowZone(_AbilityZone):
+    """Slow Orb — icy ground zone that applies SLOW to enemies inside."""
+
+    def __init__(self, center: Vec3, radius: float, duration: float, potency: float, team: int):
+        super().__init__(center, radius, duration, team)
+        self.potency = potency
+
+    def update(self, dt: float, world) -> None:
+        super().update(dt, world)
+        if not self.expired:
+            for slot, p in enumerate(world.players):
+                if not p.alive or p.team == self.team:
+                    continue
+                if p.pos.distance_to(self.center) <= self.radius:
+                    p.status.apply(SLOW, 0.5, self.potency)
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "slow_zone",
+            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "radius": self.radius,
+            "time_left": self.time_left,
+            "team": self.team,
+        }
+
+
+class _SageHealEffect(_AbilityZone):
+    """Healing Orb — green healing particles on target."""
+
+    def __init__(self, target_slot: int, amount: float, team: int):
+        super().__init__(Vec3.ZERO, 0.5, 1.5, team)
+        self.target_slot = target_slot
+        self.amount = amount
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "heal",
+            "target_slot": self.target_slot,
+            "amount": self.amount,
+            "team": self.team,
+        }
+
+
+class _SageWallEffect(_AbilityZone):
+    """Barrier Orb — deployable ice wall with visual indicator."""
+
+    def __init__(self, center: Vec3, length: float, height: float, duration: float, team: int):
+        super().__init__(center, length * 0.5, duration, team)
+        self.wall_height = height
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "wall",
+            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "radius": self.radius,
+            "height": self.wall_height,
+            "time_left": self.time_left,
+            "team": self.team,
+        }
+
+
+class _SageResurrectEffect(_AbilityZone):
+    """Resurrection — revival visual effect on the revived player."""
+
+    def __init__(self, target_slot: int, pos: Vec3, team: int):
+        super().__init__(pos, 2.0, 2.0, team)
+        self.target_slot = target_slot
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "heal",
+            "target_slot": self.target_slot,
+            "amount": 100.0,
+            "team": self.team,
+        }
+
+
+# ─── Brimstone Enhanced Effects ────────────────────────────────
+
+class _BrimStimZone(_AbilityZone):
+    """Stim Beacon — attack speed buff zone for allies."""
+
+    def __init__(self, center: Vec3, radius: float, duration: float, team: int):
+        super().__init__(center, radius, duration, team)
+
+    def update(self, dt: float, world) -> None:
+        super().update(dt, world)
+        if not self.expired:
+            for p in world.players:
+                if p.alive and p.team == self.team:
+                    if p.pos.distance_to(self.center) <= self.radius:
+                        p.status.apply(SPEED_BOOST, 0.3, 0.3)
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "trap",
+            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "radius": self.radius,
+            "team": self.team,
+        }
+
+
+class _BrimIncendiaryZone(_AbilityZone):
+    """Incendiary — fire damage zone on the ground."""
+
+    def __init__(self, center: Vec3, radius: float, damage: float, duration: float, team: int):
+        super().__init__(center, radius, duration, team)
+        self.dps = damage
+
+    def update(self, dt: float, world) -> None:
+        super().update(dt, world)
+        if not self.expired:
+            for slot, p in enumerate(world.players):
+                if not p.alive or p.team == self.team:
+                    continue
+                if p.pos.distance_to(self.center) <= self.radius:
+                    p.apply_damage(self.dps * dt, source_slot=-1, weapon_key="incendiary")
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "frag",
+            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "radius": self.radius,
+            "time_left": self.time_left,
+            "team": self.team,
+        }
+
+
+class _BrimSmokeEffect(_AbilityZone):
+    """Sky Smoke — elevated smoke cloud."""
+
+    def __init__(self, center: Vec3, radius: float, duration: float, team: int):
+        super().__init__(center, radius, duration, team)
+        self.cloud = SmokeCloud(center, radius, duration, None)
+
+    def update(self, dt: float, world) -> None:
+        super().update(dt, world)
+        self.cloud.time_left = self.time_left
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "smoke",
+            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "radius": self.radius,
+            "time_left": self.time_left,
+            "team": self.team,
+        }
+
+
+class _BrimOrbitalStrike(_AbilityZone):
+    """Orbital Strike — delayed area damage from above."""
+
+    def __init__(self, center: Vec3, radius: float, damage: float, delay: float, team: int):
+        super().__init__(center, radius, delay + 1.5, team)
+        self.damage = damage
+        self.delay = delay
+        self.strike_applied = False
+
+    def update(self, dt: float, world) -> None:
+        super().update(dt, world)
+        # Apply damage after delay
+        if not self.strike_applied and self.time_left <= self.duration - self.delay:
+            self.strike_applied = True
+            for slot, p in enumerate(world.players):
+                if not p.alive or p.team == self.team:
+                    continue
+                if p.pos.distance_to(self.center) <= self.radius:
+                    p.apply_damage(self.damage, source_slot=-1, weapon_key="orbital_strike")
+
+    def event_dict(self) -> dict:
+        remaining_delay = maxf(0.0, self.time_left - (self.duration - self.delay))
+        return {
+            "effect": "frag",
+            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "radius": self.radius,
+            "time_left": self.time_left,
+            "team": self.team,
+            "delay": remaining_delay,
+        }
+
+
+# ─── Enhanced Agent Ability Wrappers ───────────────────────────
+# These wrap the existing cast() methods to also emit effect events
+# and register zones with the AbilityEffectManager.
+
+def _ensure_effect_manager(world):
+    """Get or create the AbilityEffectManager on the world."""
+    if not hasattr(world, 'ability_effects'):
+        world.ability_effects = AbilityEffectManager()
+    return world.ability_effects
+
+
+def enhanced_jett_cloudburst(world, caster_slot, aim_dir):
+    """Enhanced Cloudburst: spawn smoke + emit effect event."""
+    p = world.players[caster_slot]
+    origin = p.pos + Vec3(0, 1.5, 0) + aim_dir * 0.5
+    vel = aim_dir * 18.0 + Vec3(0, 0.5, 0)
+    world.spawn_projectile(
+        Projectile(origin, vel, p.team, behavior="smoke",
+            owner_slot=caster_slot,
+            params={"radius": 2.5, "duration": 7.0})
+    )
+    mgr = _ensure_effect_manager(world)
+    # Estimate landing position (approximate: origin + velocity * time_to_land)
+    t_land = 0.8
+    land_pos = origin + vel * t_land
+    land_pos = Vec3(land_pos.x, 0.5, land_pos.z)
+    zone = _JettSmokeZone(land_pos, 2.5, 7.0, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("smoke",
+        center={"x": land_pos.x, "y": land_pos.y, "z": land_pos.z},
+        radius=2.5, duration=7.0, team=p.team))
+    world.event_log.append(f"cloudburst: slot{caster_slot} smoke at {land_pos}")
+
+
+def enhanced_jett_tailwind(world, caster_slot, aim_dir):
+    """Enhanced Tailwind: dash + trail effect."""
+    p = world.players[caster_slot]
+    dash = aim_dir * 12.0
+    p.vel = Vec3(dash.x, p.vel.y, dash.z)
+    p.status.apply(SPEED_BOOST, 0.4, 0.5)
+    dest = p.pos + Vec3(dash.x * 0.03, 0, dash.z * 0.03)
+    mgr = _ensure_effect_manager(world)
+    zone = _JettDashTrail(p.pos, dest, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("teleport",
+        from_pos={"x": p.pos.x, "y": p.pos.y, "z": p.pos.z},
+        to={"x": dest.x, "y": dest.y, "z": dest.z},
+        duration=0.8))
+    world.event_log.append(f"tailwind: slot{caster_slot} dash {p.pos} -> {dest}")
+
+
+def enhanced_jett_blade_storm(world, caster_slot, aim_dir):
+    """Enhanced Blade Storm: knife barrage + visual effect."""
+    p = world.players[caster_slot]
+    origin = p.pos + Vec3(0, 1.5, 0) + aim_dir * 0.5
+    import math
+    for i in range(5):
+        offset_angle = (i - 2) * 2.0
+        rad = math.radians(offset_angle)
+        cos_a = math.cos(rad)
+        sin_a = math.sin(rad)
+        dir_v = Vec3(
+            aim_dir.x * cos_a - aim_dir.z * sin_a,
+            aim_dir.y,
+            aim_dir.x * sin_a + aim_dir.z * cos_a,
+        )
+        world.spawn_projectile(
+            Projectile(origin, dir_v * 35.0, p.team,
+                gravity=0.0, bounce_restitution=0.0, max_bounces=0,
+                fuse_time=1.5, damage=50.0,
+                explosion_radius=0.6, behavior="line_hit",
+                owner_slot=caster_slot,
+                params={"radius": 0.6, "damage": 50.0})
+        )
+    mgr = _ensure_effect_manager(world)
+    zone = _JettKnifeBarrage(origin, aim_dir, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("frag",
+        center={"x": origin.x, "y": origin.y, "z": origin.z},
+        radius=1.0))
+    world.event_log.append(f"blade_storm: slot{caster_slot} fired 5 knives")
+
+
+def enhanced_sage_slow_orb(world, caster_slot, aim_dir):
+    """Enhanced Slow Orb: projectile + ground slow zone."""
+    p = world.players[caster_slot]
+    origin = p.pos + Vec3(0, 1.5, 0) + aim_dir * 0.5
+    vel = aim_dir * 14.0 + Vec3(0, 2.0, 0)
+    world.spawn_projectile(
+        Projectile(origin, vel, p.team, behavior="slow_orb",
+            owner_slot=caster_slot,
+            params={"radius": 4.0, "duration": 5.0, "potency": 1.0})
+    )
+    mgr = _ensure_effect_manager(world)
+    # Landing zone
+    t_land = 0.7
+    land_pos = origin + vel * t_land
+    land_pos = Vec3(land_pos.x, 0.1, land_pos.z)
+    zone = _SageSlowZone(land_pos, 4.0, 5.0, 1.0, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("slow_zone",
+        center={"x": land_pos.x, "y": land_pos.y, "z": land_pos.z},
+        radius=4.0, duration=5.0, team=p.team))
+    world.event_log.append(f"slow_orb: slot{caster_slot} zone at {land_pos}")
+
+
+def enhanced_sage_barrier_orb(world, caster_slot, aim_dir):
+    """Enhanced Barrier Orb: deployable wall + visual event."""
+    p = world.players[caster_slot]
+    from server.game.mapdata import Wall
+    center = p.pos + aim_dir * 2.5
+    perp = Vec3(-aim_dir.z, 0, aim_dir.x)
+    if perp.length_sq() > 0.01:
+        perp = perp.normalized()
+    wall_length = 5.0
+    wall_height = 3.5
+    mn = Vec3(
+        center.x - perp.x * wall_length * 0.5, 0,
+        center.z - perp.z * wall_length * 0.5)
+    mx = Vec3(
+        center.x + perp.x * wall_length * 0.5, wall_height,
+        center.z + perp.z * wall_length * 0.5)
+    temp_wall = Wall(mn, mx, "concrete")
+    world.map_data.walls.append(temp_wall)
+    world.map_data._ray_hash = None
+    wall_entity = _TimedWall(temp_wall, world.map_data, 15.0, "solid", p.team)
+    world.deployables.append(wall_entity)
+    mgr = _ensure_effect_manager(world)
+    zone = _SageWallEffect(center, wall_length, wall_height, 15.0, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("wall",
+        center={"x": center.x, "y": center.y, "z": center.z},
+        length=wall_length, height=wall_height, duration=15.0, team=p.team))
+    world.event_log.append(f"barrier_orb: slot{caster_slot} wall at {center}")
+
+
+def enhanced_sage_healing_orb(world, caster_slot, aim_dir):
+    """Enhanced Healing Orb: heal nearest ally + visual effect."""
+    p = world.players[caster_slot]
+    heal_amount = 60.0
+    # Find nearest alive ally (excluding self)
+    best_slot = -1
+    best_dist = 999.0
+    for slot, target in enumerate(world.players):
+        if slot == caster_slot or not target.alive or target.team != p.team:
+            continue
+        d = p.pos.distance_to(target.pos)
+        if d < best_dist and d < 10.0:
+            best_dist = d
+            best_slot = slot
+    if best_slot >= 0:
+        target = world.players[best_slot]
+        target.health = min(100.0, target.health + heal_amount)
+        mgr = _ensure_effect_manager(world)
+        zone = _SageHealEffect(best_slot, heal_amount, p.team)
+        mgr.add_zone(zone)
+        mgr.emit_event(AbilityEffectEvent("heal",
+            target_slot=best_slot, amount=heal_amount, team=p.team))
+        world.event_log.append(f"heal_orb: slot{caster_slot} healed slot{best_slot} +{heal_amount}hp")
+    else:
+        # No ally nearby: heal self
+        p.health = min(100.0, p.health + heal_amount)
+        mgr = _ensure_effect_manager(world)
+        zone = _SageHealEffect(caster_slot, heal_amount, p.team)
+        mgr.add_zone(zone)
+        mgr.emit_event(AbilityEffectEvent("heal",
+            target_slot=caster_slot, amount=heal_amount, team=p.team))
+        world.event_log.append(f"heal_orb: slot{caster_slot} self-heal +{heal_amount}hp")
+
+
+def enhanced_sage_resurrection(world, caster_slot, aim_dir):
+    """Enhanced Resurrection: revive + resurrection visual effect."""
+    caster = world.players[caster_slot]
+    best_slot = -1
+    best_dist = 999.0
+    for slot, p in enumerate(world.players):
+        if not p.alive and p.team == caster.team:
+            d = p.pos.distance_to(caster.pos)
+            if d < best_dist:
+                best_dist = d
+                best_slot = slot
+    if best_slot >= 0:
+        target = world.players[best_slot]
+        target.alive = True
+        target.health = 100.0
+        target.shield_hp = 0.0
+        target.pos = caster.pos + aim_dir * 1.0
+        target.vel = Vec3()
+        mgr = _ensure_effect_manager(world)
+        zone = _SageResurrectEffect(best_slot, target.pos, caster.team)
+        mgr.add_zone(zone)
+        mgr.emit_event(AbilityEffectEvent("heal",
+            target_slot=best_slot, amount=100.0, team=caster.team))
+        world.event_log.append(f"resurrection: slot{caster_slot} revived slot{best_slot}")
+
+
+def enhanced_brim_stim_beacon(world, caster_slot, aim_dir):
+    """Enhanced Stim Beacon: zone buff + trap visual."""
+    p = world.players[caster_slot]
+    beacon = _StimBeacon(p.pos, p.team, 4.0, 8.0)
+    world.deployables.append(beacon)
+    mgr = _ensure_effect_manager(world)
+    zone = _BrimStimZone(p.pos, 4.0, 8.0, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("trap",
+        center={"x": p.pos.x, "y": p.pos.y, "z": p.pos.z},
+        radius=4.0, team=p.team))
+    world.event_log.append(f"stim_beacon: slot{caster_slot} at {p.pos}")
+
+
+def enhanced_brim_incendiary(world, caster_slot, aim_dir):
+    """Enhanced Incendiary: projectile → fire damage zone."""
+    p = world.players[caster_slot]
+    origin = p.pos + Vec3(0, 1.5, 0) + aim_dir * 0.5
+    world.spawn_projectile(
+        Projectile(origin, aim_dir * 14.0, p.team,
+            behavior="flame", max_bounces=1, fuse_time=0.5,
+            owner_slot=caster_slot,
+            params={"radius": 3.0, "damage": 40.0, "duration": 6.0})
+    )
+    mgr = _ensure_effect_manager(world)
+    t_land = 0.6
+    land_pos = origin + aim_dir * 14.0 * t_land
+    land_pos = Vec3(land_pos.x, 0.1, land_pos.z)
+    zone = _BrimIncendiaryZone(land_pos, 3.0, 40.0, 6.0, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("frag",
+        center={"x": land_pos.x, "y": land_pos.y, "z": land_pos.z},
+        radius=3.0, duration=6.0, team=p.team))
+    world.event_log.append(f"incendiary: slot{caster_slot} fire at {land_pos}")
+
+
+def enhanced_brim_sky_smoke(world, caster_slot, aim_dir):
+    """Enhanced Sky Smoke: up to 3 smokes at target locations."""
+    p = world.players[caster_slot]
+    # Primary smoke at aim direction
+    target = p.pos + aim_dir * 15.0
+    target = Vec3(target.x, 0, target.z)
+    cloud = SmokeCloud(target, 3.5, 14.0, world.rng)
+    world.smokes.append(cloud)
+    mgr = _ensure_effect_manager(world)
+    zone = _BrimSmokeEffect(target, 3.5, 14.0, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("smoke",
+        center={"x": target.x, "y": target.y, "z": target.z},
+        radius=3.5, duration=14.0, team=p.team))
+    world.event_log.append(f"sky_smoke: slot{caster_slot} at {target}")
+
+
+def enhanced_brim_orbital_strike(world, caster_slot, aim_dir):
+    """Enhanced Orbital Strike: delayed area nuke + warning indicator."""
+    p = world.players[caster_slot]
+    origin = p.pos + Vec3(0, 1.5, 0)
+    hit = world.map_data.raycast(origin, aim_dir, 30.0)
+    target_pos = hit.point if hit is not None else p.pos + aim_dir * 10.0
+    # Warning indicator
+    mgr = _ensure_effect_manager(world)
+    zone = _BrimOrbitalStrike(target_pos, 5.0, 150.0, 2.0, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("frag",
+        center={"x": target_pos.x, "y": target_pos.y, "z": target_pos.z},
+        radius=5.0, delay=2.0, team=p.team))
+    # Also spawn the delayed strike deployable for authoritative damage
+    strike = _DelayedStrike(target_pos, p.team, 5.0, 150.0, 2.0)
+    world.deployables.append(strike)
+    world.event_log.append(f"orbital_strike: slot{caster_slot} targeting {target_pos}")

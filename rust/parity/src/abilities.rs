@@ -27,6 +27,113 @@ pub enum AbilityType {
 }
 
 // ──────────────────────────────────────────────────────────────────────
+// AbilityEffect — 完整的技能效果資料
+// ──────────────────────────────────────────────────────────────────────
+
+/// 每個技能施放後產生的效果，包含渲染和遊戲邏輯所需的全部資料。
+/// 客戶端根據 effect_type 決定渲染方式，伺服端用於碰撞/傷害判定。
+#[derive(Debug, Clone)]
+pub enum AbilityEffect {
+    /// 煙霧球： LOS 阻斷器
+    Smoke {
+        center: [f64; 3],
+        radius: f64,
+        duration: f64,
+        team: u8,
+    },
+    /// 閃光： 白屏致盲
+    Flash {
+        center: [f64; 3],
+        direction: [f64; 3],
+        radius: f64,
+    },
+    /// 碎片爆炸： 範圍傷害 + 粒子
+    Frag {
+        center: [f64; 3],
+        radius: f64,
+        damage: f64,
+    },
+    /// 治療： 綠色粒子 + HP 恢復
+    Heal {
+        target_slot: u32,
+        amount: f64,
+        team: u8,
+    },
+    /// 部署牆： 阻擋視線和移動
+    Wall {
+        start: [f64; 3],
+        end: [f64; 3],
+        duration: f64,
+        team: u8,
+    },
+    /// 減速區： 地面冰霜效果 + SLOW
+    Slow {
+        center: [f64; 3],
+        radius: f64,
+        duration: f64,
+        potency: f64,
+    },
+    /// 陷阱： 可見發光指示器
+    Trap {
+        center: [f64; 3],
+        radius: f64,
+        team: u8,
+    },
+    /// 傳送門： 雙端 portal + 連接光束
+    Teleport {
+        from: [f64; 3],
+        to: [f64; 3],
+        duration: f64,
+    },
+    /// 近視： 暗霧覆蓋
+    Nearsight {
+        center: [f64; 3],
+        radius: f64,
+        duration: f64,
+    },
+    /// 技能封鎖： 電流特效
+    Suppression {
+        target_slot: u32,
+        duration: f64,
+    },
+    /// 線性光束： 穿透傷害
+    Beam {
+        origin: [f64; 3],
+        direction: [f64; 3],
+        length: f64,
+        damage: f64,
+        radius: f64,
+    },
+    /// 刺激信標： 範圍加速
+    StimBeacon {
+        center: [f64; 3],
+        radius: f64,
+        duration: f64,
+        team: u8,
+    },
+}
+
+impl AbilityEffect {
+    /// 回傳效果類型名稱（供序列化 / 客戶端路由）
+    pub fn effect_type(&self) -> &'static str {
+        match self {
+            AbilityEffect::Smoke { .. } => "smoke",
+            AbilityEffect::Flash { .. } => "flash",
+            AbilityEffect::Frag { .. } => "frag",
+            AbilityEffect::Heal { .. } => "heal",
+            AbilityEffect::Wall { .. } => "wall",
+            AbilityEffect::Slow { .. } => "slow_zone",
+            AbilityEffect::Trap { .. } => "trap",
+            AbilityEffect::Teleport { .. } => "teleport",
+            AbilityEffect::Nearsight { .. } => "nearsight",
+            AbilityEffect::Suppression { .. } => "suppression",
+            AbilityEffect::Beam { .. } => "beam",
+            AbilityEffect::StimBeacon { .. } => "trap",
+        }
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────
 // 技能槽位
 // ──────────────────────────────────────────────────────────────────────
 
@@ -107,6 +214,223 @@ impl AbilityInstance {
         self.current_charges = self.def.charges;
         self.last_used_time = 0.0;
         self.active_effects.clear();
+    }
+
+    /// 根據技能定義產生對應的 AbilityEffect。
+    /// caster_pos / aim_dir 為施法者位置和瞄準方向。
+    pub fn create_effect(
+        &self,
+        caster_pos: [f64; 3],
+        aim_dir: [f64; 3],
+        team: u8,
+    ) -> AbilityEffect {
+        match self.def.name {
+            // ─── Jett ───
+            "cloudburst" => {
+                let land = [
+                    caster_pos[0] + aim_dir[0] * 5.0,
+                    0.5,
+                    caster_pos[2] + aim_dir[2] * 5.0,
+                ];
+                AbilityEffect::Smoke {
+                    center: land,
+                    radius: self.def.radius,
+                    duration: self.def.duration,
+                    team,
+                }
+            }
+            "updraft" => {
+                // Vertical launch — no world effect, just impulse
+                AbilityEffect::Teleport {
+                    from: caster_pos,
+                    to: [
+                        caster_pos[0],
+                        caster_pos[1] + 6.0,
+                        caster_pos[2],
+                    ],
+                    duration: 0.4,
+                }
+            }
+            "tailwind" => {
+                let dest = [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    caster_pos[1],
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ];
+                AbilityEffect::Teleport {
+                    from: caster_pos,
+                    to: dest,
+                    duration: 0.4,
+                }
+            }
+            "blade_storm" => AbilityEffect::Frag {
+                center: caster_pos,
+                radius: 0.6,
+                damage: self.def.damage,
+            },
+            // ─── Sage ───
+            "slow_orb" => {
+                let land = [
+                    caster_pos[0] + aim_dir[0] * 6.0,
+                    0.1,
+                    caster_pos[2] + aim_dir[2] * 6.0,
+                ];
+                AbilityEffect::Slow {
+                    center: land,
+                    radius: self.def.radius,
+                    duration: self.def.duration,
+                    potency: 1.0,
+                }
+            }
+            "barrier_orb" | "barrier_wall" => {
+                let center = [
+                    caster_pos[0] + aim_dir[0] * 2.5,
+                    caster_pos[1],
+                    caster_pos[2] + aim_dir[2] * 2.5,
+                ];
+                let perp = if (aim_dir[0] * aim_dir[0] + aim_dir[2] * aim_dir[2]) > 0.01 {
+                    let len = (aim_dir[0] * aim_dir[0] + aim_dir[2] * aim_dir[2]).sqrt();
+                    [-aim_dir[2] / len, 0.0, aim_dir[0] / len]
+                } else {
+                    [1.0, 0.0, 0.0]
+                };
+                let half = 2.5;
+                let start = [
+                    center[0] - perp[0] * half,
+                    0.0,
+                    center[2] - perp[2] * half,
+                ];
+                let end = [
+                    center[0] + perp[0] * half,
+                    self.def.radius, // reused as wall height
+                    center[2] + perp[2] * half,
+                ];
+                AbilityEffect::Wall {
+                    start,
+                    end,
+                    duration: self.def.duration,
+                    team,
+                }
+            }
+            "healing_orb" => AbilityEffect::Heal {
+                target_slot: 0, // filled by server based on target
+                amount: 60.0,
+                team,
+            },
+            "resurrection" => AbilityEffect::Heal {
+                target_slot: 0, // filled by server
+                amount: 100.0,
+                team,
+            },
+            // ─── Brimstone ───
+            "stim_beacon" => AbilityEffect::StimBeacon {
+                center: caster_pos,
+                radius: self.def.radius,
+                duration: self.def.duration,
+                team,
+            },
+            "incendiary" => {
+                let land = [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    0.1,
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ];
+                AbilityEffect::Frag {
+                    center: land,
+                    radius: self.def.radius,
+                    damage: self.def.damage,
+                }
+            }
+            "sky_smoke" => {
+                let target = [
+                    caster_pos[0] + aim_dir[0] * 15.0,
+                    0.0,
+                    caster_pos[2] + aim_dir[2] * 15.0,
+                ];
+                AbilityEffect::Smoke {
+                    center: target,
+                    radius: self.def.radius,
+                    duration: self.def.duration,
+                    team,
+                }
+            }
+            "orbital_strike" => {
+                let target = [
+                    caster_pos[0] + aim_dir[0] * 12.0,
+                    0.0,
+                    caster_pos[2] + aim_dir[2] * 12.0,
+                ];
+                AbilityEffect::Frag {
+                    center: target,
+                    radius: self.def.radius,
+                    damage: self.def.damage,
+                }
+            }
+            // ─── Generic fallback ───
+            _ => match self.def.ability_type {
+                AbilityType::Smoke => AbilityEffect::Smoke {
+                    center: [
+                        caster_pos[0] + aim_dir[0] * 5.0,
+                        0.5,
+                        caster_pos[2] + aim_dir[2] * 5.0,
+                    ],
+                    radius: self.def.radius,
+                    duration: self.def.duration,
+                    team,
+                },
+                AbilityType::Frag => AbilityEffect::Frag {
+                    center: caster_pos,
+                    radius: self.def.radius,
+                    damage: self.def.damage,
+                },
+                AbilityType::Heal => AbilityEffect::Heal {
+                    target_slot: 0,
+                    amount: 50.0,
+                    team,
+                },
+                AbilityType::Wall => AbilityEffect::Wall {
+                    start: caster_pos,
+                    end: [
+                        caster_pos[0] + aim_dir[0] * 5.0,
+                        3.0,
+                        caster_pos[2] + aim_dir[2] * 5.0,
+                    ],
+                    duration: self.def.duration,
+                    team,
+                },
+                AbilityType::Slow => AbilityEffect::Slow {
+                    center: [
+                        caster_pos[0] + aim_dir[0] * 5.0,
+                        0.1,
+                        caster_pos[2] + aim_dir[2] * 5.0,
+                    ],
+                    radius: self.def.radius,
+                    duration: self.def.duration,
+                    potency: 1.0,
+                },
+                AbilityType::Teleport => AbilityEffect::Teleport {
+                    from: caster_pos,
+                    to: [
+                        caster_pos[0] + aim_dir[0] * 6.0,
+                        caster_pos[1],
+                        caster_pos[2] + aim_dir[2] * 6.0,
+                    ],
+                    duration: 0.5,
+                },
+                AbilityType::Beam => AbilityEffect::Beam {
+                    origin: caster_pos,
+                    direction: aim_dir,
+                    length: 50.0,
+                    damage: self.def.damage,
+                    radius: 1.5,
+                },
+                _ => AbilityEffect::Frag {
+                    center: caster_pos,
+                    radius: 1.0,
+                    damage: 0.0,
+                },
+            },
+        }
     }
 }
 

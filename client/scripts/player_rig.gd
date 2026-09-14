@@ -3,11 +3,12 @@ extends Node3D
 
 ## 第三人稱角色骨架：
 ##   模式 A（預設）：載入 .glb 模型 + Skeleton3D + AnimationPlayer
-##   模式 B（fallback）：程序化方塊骨架（無外部模型時自動使用）
+##   模式 B（fallback）：程序化骨架
+##     - 優先 CharacterGeneratorV2（45 部位 Valorant 品質）
+##     - 回退 CharacterGenerator（20 部位）
+##     - 最終回退方塊骨架
 ##
-## .glb 模型放在 res://assets/characters/ 目錄下，
-## 檔名格式：char_<team>_<slot>.glb（如 char_0_0.glb）
-## 或共用模型：char_<role>.glb（如 char_duelist.glb）
+## .glb 模型放在 res://assets/characters/ 目錄下
 
 const TEAM_COLORS := {
 	0: Color(0.95, 0.35, 0.30),
@@ -19,13 +20,17 @@ var _bob := 0.0
 var _fall := 0.0
 var _last_speed := 0.0
 
-# 模式 A：GLB 模型
+# GLB 模式
 var _glb_model: Node3D = null
 var _anim_player: AnimationPlayer = null
 var _skeleton: Skeleton3D = null
 var _use_glb := false
 
-# 模式 B：程序化骨架
+# 程序化模式
+var _use_v2 := false
+var _anim_ctrl: AnimationController = null
+
+# 舊版 fallback 引用（方塊骨架）
 var _torso: MeshInstance3D
 var _head: MeshInstance3D
 var _leg_l: MeshInstance3D
@@ -33,7 +38,7 @@ var _leg_r: MeshInstance3D
 var _arm_l: MeshInstance3D
 var _arm_r: MeshInstance3D
 
-# 動畫名稱映射（GLB 模型的 AnimationPlayer 中的動畫名稱）
+# GLB 動畫名稱映射
 var _anim_idle: String = "Idle"
 var _anim_run: String = "Run"
 var _anim_walk: String = "Walk"
@@ -46,17 +51,14 @@ var _anim_reload: String = "Reload"
 
 func build(team_id: int, slot: int = -1) -> void:
 	team = team_id
-	# 嘗試載入 GLB 模型
 	if _try_load_glb(team_id, slot):
 		_use_glb = true
 		return
-	# Fallback：程序化骨架
 	_use_glb = false
 	_build_procedural(team_id)
 
 
 func _try_load_glb(team_id: int, slot: int) -> bool:
-	# 嘗試多個路徑
 	var paths := [
 		"res://assets/characters/char_%d_%d.glb" % [team_id, slot],
 		"res://assets/characters/char_%d.glb" % team_id,
@@ -68,10 +70,8 @@ func _try_load_glb(team_id: int, slot: int) -> bool:
 			if scene:
 				_glb_model = scene.instantiate()
 				add_child(_glb_model)
-				# 尋找 AnimationPlayer
 				_anim_player = _find_node(_glb_model, AnimationPlayer)
 				_skeleton = _find_node(_glb_model, Skeleton3D)
-				# 嘗試找骨骼 MeshInstance3D（如果有）
 				if _skeleton:
 					for child in _skeleton.get_children():
 						if child is MeshInstance3D:
@@ -91,7 +91,21 @@ func _find_node(root: Node, type) -> Node:
 
 
 func _build_procedural(team_id: int) -> void:
-	# 使用 CharacterGenerator 產生 20 部位人形骨架
+	# Priority 1: CharacterGeneratorV2 (45-part Valorant quality)
+	if CharacterGeneratorV2:
+		var gen := CharacterGeneratorV2.new()
+		var model := gen.generate(team_id)
+		for child in model.get_children():
+			model.remove_child(child)
+			add_child(child)
+		model.queue_free()
+		_use_v2 = true
+		# Set up AnimationController for v2 rig
+		_anim_ctrl = AnimationController.new()
+		_anim_ctrl.bind(self)
+		return
+
+	# Priority 2: CharacterGenerator (20-part)
 	if CharacterGenerator:
 		var gen := CharacterGenerator.new()
 		var model := gen.generate(team_id)
@@ -99,15 +113,13 @@ func _build_procedural(team_id: int) -> void:
 			model.remove_child(child)
 			add_child(child)
 		model.queue_free()
-		# 取得骨架節點引用
-		_head = _find_mesh("Head")
-		_torso = _find_mesh("Torso")
-		_leg_l = _find_mesh("UpperLegL")
-		_leg_r = _find_mesh("UpperLegR")
-		_arm_l = _find_mesh("UpperArmL")
-		_arm_r = _find_mesh("UpperArmR")
+		# Set up AnimationController for legacy rig too
+		_anim_ctrl = AnimationController.new()
+		_anim_ctrl.bind(self)
 		return
-	# Fallback：原始方塊骨架
+
+	# Priority 3: Original box fallback
+	_use_v2 = false
 	var col: Color = TEAM_COLORS[team_id]
 	var dark := col.darkened(0.35)
 	var skin := Color(0.78, 0.65, 0.55)
@@ -123,21 +135,21 @@ func _build_procedural(team_id: int) -> void:
 	_arm_r = _part(Vector3(0.11, 0.62, 0.12), col, Vector3(0.23, 0.85, 0))
 
 
-func _find_mesh(name: String) -> MeshInstance3D:
+func _find_mesh(target_name: String) -> MeshInstance3D:
 	for child in get_children():
-		if child.name == name and child is MeshInstance3D:
+		if child.name == target_name and child is MeshInstance3D:
 			return child
-		var found := _find_mesh_in(child, name)
+		var found := _find_mesh_in(child, target_name)
 		if found:
 			return found
 	return null
 
 
-func _find_mesh_in(node: Node, name: String) -> MeshInstance3D:
+func _find_mesh_in(node: Node, target_name: String) -> MeshInstance3D:
 	for child in node.get_children():
-		if child.name == name and child is MeshInstance3D:
+		if child.name == target_name and child is MeshInstance3D:
 			return child
-		var found := _find_mesh_in(child, name)
+		var found := _find_mesh_in(child, target_name)
 		if found:
 			return found
 	return null
@@ -159,8 +171,12 @@ func _part(size: Vector3, color: Color, pos: Vector3) -> MeshInstance3D:
 func update_anim(dt: float, speed: float, on_ground: bool, crouch: bool, alive: bool) -> void:
 	if _use_glb:
 		_update_glb_anim(dt, speed, on_ground, crouch, alive)
+	elif _anim_ctrl and _anim_ctrl.is_bound():
+		# V2 or legacy rig with AnimationController
+		_anim_ctrl.update(dt, speed, on_ground, crouch, alive)
 	else:
-		_update_procedural_anim(dt, speed, on_ground, crouch, alive)
+		# Original box fallback — inline animation
+		_update_box_fallback(dt, speed, on_ground, crouch, alive)
 
 
 func _update_glb_anim(dt: float, speed: float, on_ground: bool, crouch: bool, alive: bool) -> void:
@@ -173,7 +189,6 @@ func _update_glb_anim(dt: float, speed: float, on_ground: bool, crouch: bool, al
 
 	_fall = 0.0
 
-	# 選擇動畫
 	var target_anim := _anim_idle
 	if not on_ground:
 		target_anim = _anim_jump
@@ -182,17 +197,15 @@ func _update_glb_anim(dt: float, speed: float, on_ground: bool, crouch: bool, al
 	elif speed > 0.5:
 		target_anim = _anim_run if speed > 3.0 else _anim_walk
 
-	# 播放動畫
 	if _anim_player and _anim_player.has_animation(target_anim):
 		if _anim_player.current_animation != target_anim:
 			_anim_player.play(target_anim)
-		# 動畫速度依移動速度調整
 		_anim_player.speed_scale = clampf(speed / 3.0, 0.5, 1.5) if speed > 0.5 else 1.0
 
 	_last_speed = speed
 
 
-func _update_procedural_anim(dt: float, speed: float, on_ground: bool, crouch: bool, alive: bool) -> void:
+func _update_box_fallback(dt: float, speed: float, on_ground: bool, crouch: bool, alive: bool) -> void:
 	if not alive:
 		_fall = minf(1.0, _fall + dt * 2.0)
 		rotation.x = -PI * 0.5 * _fall
