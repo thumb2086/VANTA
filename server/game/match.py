@@ -10,11 +10,52 @@ Buy Phase → Action Phase → End Phase，加上：
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 from server.core.math_core import Vec3
 from server.game.economy import ROUND_WIN_REWARD, loss_bonus
+
+
+@dataclass
+class PlayerMatchStats:
+    player_id: int
+    team: int
+    kills: int = 0
+    deaths: int = 0
+    assists: int = 0
+    score: int = 0
+    damage: int = 0
+    first_kills: int = 0
+    first_deaths: int = 0
+    plants: int = 0
+    defuses: int = 0
+    economy: int = 0
+    alive: bool = True
+
+    def compute_score(self) -> None:
+        self.score = int(self.kills * 3.0 + self.assists * 1.0 + self.damage * 0.01)
+
+
+@dataclass
+class MatchResult:
+    match_id: str = ""
+    winner: int = -1
+    scores: dict = field(default_factory=lambda: {0: 0, 1: 0})
+    total_rounds: int = 0
+    player_stats: dict = field(default_factory=dict)
+    round_records: list = field(default_factory=list)
+    is_ranked: bool = False
+    elo_changes: dict = field(default_factory=dict)
+
+    def get_team_stats(self, team: int) -> list[PlayerMatchStats]:
+        return [s for s in self.player_stats.values() if s.team == team]
+
+    def get_winner_ids(self) -> list[int]:
+        return [s.player_id for s in self.get_team_stats(self.winner)]
+
+    def get_loser_ids(self) -> list[int]:
+        return [s.player_id for s in self.get_team_stats(1 - self.winner)]
 
 ROUNDS_PER_HALF = 12
 ROUNDS_TO_WIN = 13
@@ -225,3 +266,58 @@ class Match:
             "scores": dict(self.scores),
             "records": [{"n": r.number, "w": r.winner, "r": r.reason} for r in self.round_records],
         }
+
+    # ──── Match result tracking ────
+
+    def build_match_result(self, match_id: str = "") -> MatchResult:
+        result = MatchResult(
+            match_id=match_id or f"match_{self.round}_{id(self)}",
+            winner=self.round_winner if self.round_winner is not None else -1,
+            scores=dict(self.scores),
+            total_rounds=self.round,
+            round_records=[{"n": r.number, "w": r.winner, "r": r.reason} for r in self.round_records],
+            is_ranked=self.mode == "competitive",
+        )
+        for i, p in enumerate(self.world.players):
+            stats = PlayerMatchStats(
+                player_id=i,
+                team=p.team,
+                kills=getattr(p, "kills", 0),
+                deaths=getattr(p, "deaths", 0),
+                assists=getattr(p, "assists", 0),
+                damage=getattr(p, "damage_dealt", 0),
+                first_kills=getattr(p, "first_kills", 0),
+                first_deaths=getattr(p, "first_deaths", 0),
+                plants=getattr(p, "plants", 0),
+                defuses=getattr(p, "defuses", 0),
+                economy=p.economy.credits if hasattr(p, "economy") else 0,
+                alive=p.alive,
+            )
+            stats.compute_score()
+            result.player_stats[i] = stats
+        return result
+
+    def apply_ranked_changes(self, match_result: MatchResult, ranked_system) -> dict:
+        if not match_result.is_ranked or match_result.winner < 0:
+            return {}
+
+        winner_ids = [str(s.player_id) for s in match_result.get_team_stats(match_result.winner)]
+        loser_ids = [str(s.player_id) for s in match_result.get_team_stats(1 - match_result.winner)]
+
+        winner_elos = []
+        loser_elos = []
+        for pid in winner_ids:
+            pr = ranked_system.get_or_create(pid)
+            winner_elos.append(pr.elo)
+        for pid in loser_ids:
+            pr = ranked_system.get_or_create(pid)
+            loser_elos.append(pr.elo)
+
+        elo_results = ranked_system.process_match_result(
+            winner_ids, loser_ids, winner_elos, loser_elos
+        )
+        match_result.elo_changes = elo_results
+        return elo_results
+
+    def get_round_records_raw(self) -> list[dict]:
+        return [{"n": r.number, "w": r.winner, "r": r.reason} for r in self.round_records]
