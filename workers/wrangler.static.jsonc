@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vanta-webgl",
+  "account_id": "e54950142f6a8b045cfa0bb474af60a2",
+  "compatibility_date": "2026-07-01",
+  "main": "src/entry.py",
+
+  "site": {
+    "bucket": "../webgl_build"
+  }
+}

@@ -5,6 +5,7 @@
 //! status：10 種狀態干擾系統
 //! inventory：3-slot 武器槽位與切換
 
+pub mod abilities;
 pub mod ballistics;
 pub mod collision;
 pub mod inventory;
@@ -14,4 +15,5 @@ pub mod protocol;
 pub mod recoil;
 pub mod status;
 pub mod weapon_state;
+pub mod match_state;
 pub mod weapons;

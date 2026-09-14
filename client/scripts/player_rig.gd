@@ -91,6 +91,23 @@ func _find_node(root: Node, type) -> Node:
 
 
 func _build_procedural(team_id: int) -> void:
+	# 使用 CharacterGenerator 產生 20 部位人形骨架
+	if CharacterGenerator:
+		var gen := CharacterGenerator.new()
+		var model := gen.generate(team_id)
+		for child in model.get_children():
+			model.remove_child(child)
+			add_child(child)
+		model.queue_free()
+		# 取得骨架節點引用
+		_head = _find_mesh("Head")
+		_torso = _find_mesh("Torso")
+		_leg_l = _find_mesh("UpperLegL")
+		_leg_r = _find_mesh("UpperLegR")
+		_arm_l = _find_mesh("UpperArmL")
+		_arm_r = _find_mesh("UpperArmR")
+		return
+	# Fallback：原始方塊骨架
 	var col: Color = TEAM_COLORS[team_id]
 	var dark := col.darkened(0.35)
 	var skin := Color(0.78, 0.65, 0.55)
@@ -104,6 +121,26 @@ func _build_procedural(team_id: int) -> void:
 	_leg_r = _part(Vector3(0.14, 0.7, 0.16), dark, Vector3(0.11, 0.35, 0))
 	_arm_l = _part(Vector3(0.11, 0.62, 0.12), col, Vector3(-0.23, 0.85, 0))
 	_arm_r = _part(Vector3(0.11, 0.62, 0.12), col, Vector3(0.23, 0.85, 0))
+
+
+func _find_mesh(name: String) -> MeshInstance3D:
+	for child in get_children():
+		if child.name == name and child is MeshInstance3D:
+			return child
+		var found := _find_mesh_in(child, name)
+		if found:
+			return found
+	return null
+
+
+func _find_mesh_in(node: Node, name: String) -> MeshInstance3D:
+	for child in node.get_children():
+		if child.name == name and child is MeshInstance3D:
+			return child
+		var found := _find_mesh_in(child, name)
+		if found:
+			return found
+	return null
 
 
 func _part(size: Vector3, color: Color, pos: Vector3) -> MeshInstance3D:
