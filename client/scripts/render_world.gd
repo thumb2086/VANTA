@@ -114,7 +114,7 @@ func spawn_players() -> void:
 	for i in range(10):
 		var team := 0 if i < 5 else 1
 		var rig := PlayerRig.new()
-		rig.build(team)
+		rig.build(team, i)
 		# 名牌
 		var tag := Label3D.new()
 		tag.text = "P%d" % i
