@@ -1,0 +1,28 @@
+{
+  "key": "kaiar",
+  "codename": "Kaiar",
+  "name": "Noor Silva",
+  "faction": "ASGARD-9",
+  "role": "duelist",
+  "role_label": "決鬥者",
+  "desc": "先鋒突破，單兵作戰的尖刀",
+  "bio": "先鋒突破，單兵作戰的尖刀。行動如幽靈般無聲。代號「Kaiar」，隸屬 ASGARD-9。",
+  "kit": [
+    "flash",
+    "stim",
+    "frag"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 1.03,
+    "shield_pref": "light",
+    "role_glyph": "flash"
+  },
+  "colors": {
+    "primary": "#e2365f",
+    "accent": "#f09f4b",
+    "bg1": "#3b161f",
+    "bg2": "#0a1e19"
+  },
+  "seed": 355
+}

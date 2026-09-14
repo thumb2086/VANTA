@@ -1,0 +1,28 @@
+{
+  "key": "runeara",
+  "codename": "Runeara",
+  "name": "Mira Tanaka",
+  "faction": "TEMPEST",
+  "role": "initiator",
+  "role_label": "先鋒",
+  "desc": "情報壓制與開戰的發動機",
+  "bio": "情報壓制與開戰的發動機。戰場上從不退縮。代號「Runeara」，隸屬 TEMPEST。",
+  "kit": [
+    "flash",
+    "stim",
+    "trap"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 1.0,
+    "shield_pref": "light",
+    "role_glyph": "spark"
+  },
+  "colors": {
+    "primary": "#36cce2",
+    "accent": "#4b60f0",
+    "bg1": "#16363b",
+    "bg2": "#1e0c0a"
+  },
+  "seed": 393
+}

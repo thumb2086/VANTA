@@ -1,0 +1,28 @@
+{
+  "key": "runear",
+  "codename": "Runear",
+  "name": "Mira Silva",
+  "faction": "IRONFANG",
+  "role": "controller",
+  "role_label": "控場者",
+  "desc": "以煙霧與封鎖主宰戰場節奏",
+  "bio": "以煙霧與封鎖主宰戰場節奏。行動如幽靈般無聲。代號「Runear」，隸屬 IRONFANG。",
+  "kit": [
+    "smoke",
+    "smoke",
+    "frag"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 0.99,
+    "shield_pref": "heavy",
+    "role_glyph": "smoke"
+  },
+  "colors": {
+    "primary": "#e2364c",
+    "accent": "#f0b14b",
+    "bg1": "#3b161b",
+    "bg2": "#0a1e1b"
+  },
+  "seed": 255
+}

@@ -1,0 +1,12 @@
+{
+  "name": "bgm_combat",
+  "genre": "combat",
+  "bpm": 142,
+  "scale": "phrygian",
+  "root_midi": 57,
+  "bars_intro": 2,
+  "bars_loop": 8,
+  "duration_sec": 16.901,
+  "loop_start_sec": 3.38,
+  "seed": 11
+}

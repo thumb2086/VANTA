@@ -1,0 +1,12 @@
+{
+  "name": "bgm_menu",
+  "genre": "menu",
+  "bpm": 76,
+  "scale": "dorian",
+  "root_midi": 57,
+  "bars_intro": 2,
+  "bars_loop": 8,
+  "duration_sec": 31.579,
+  "loop_start_sec": 6.316,
+  "seed": 31
+}

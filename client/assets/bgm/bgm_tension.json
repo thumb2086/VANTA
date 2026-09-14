@@ -1,0 +1,12 @@
+{
+  "name": "bgm_tension",
+  "genre": "tension",
+  "bpm": 100,
+  "scale": "minor",
+  "root_midi": 57,
+  "bars_intro": 2,
+  "bars_loop": 8,
+  "duration_sec": 24.0,
+  "loop_start_sec": 4.8,
+  "seed": 21
+}

@@ -1,0 +1,13 @@
+[project]
+name = "vanta-ws"
+version = "0.1.0"
+description = "VANTA authoritative game server — Cloudflare Workers (WebSocket + Durable Object)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "workers-py",
+    "workers-runtime-sdk",
+]

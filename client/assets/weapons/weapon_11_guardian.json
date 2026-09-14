@@ -1,0 +1,32 @@
+{
+  "frame": "guardian",
+  "name": "Guardian ·斜角握把+短槍管+紅點瞄具",
+  "price": 2250,
+  "mods": {
+    "barrel": "short_barrel",
+    "grip": "angled_grip",
+    "muzzle": "flash_hider",
+    "sight": "red_dot"
+  },
+  "stats": {
+    "key": "guardian_barrel-grip-muzzle-sight",
+    "name": "Guardian ·斜角握把+短槍管+紅點瞄具",
+    "wclass": "rifle",
+    "price": 2250,
+    "fire_rate_rps": 5.565,
+    "mag_size": 12,
+    "reserve": 36,
+    "reload_time": 2.5,
+    "damage": 62.4,
+    "falloff": null,
+    "penetration_level": 2,
+    "first_shot_accuracy": 0.1656,
+    "spread_per_bullet": 0.026,
+    "move_speed_mult": 0.92,
+    "ads_spread_mult": 0.55,
+    "automatic": false,
+    "burst": 1,
+    "pellets": 1,
+    "scoped": false
+  }
+}

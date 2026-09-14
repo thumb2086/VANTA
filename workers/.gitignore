@@ -1,0 +1,7 @@
+# 打包時從 ../server 複製進來的模擬核心（來源在倉庫根目錄）
+src/server/
+.wrangler/
+.venv-workers/
+pylock.toml
+__pycache__/
+*.pyc

@@ -1,0 +1,43 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
+[application]
+
+config/name="VANTA Client"
+run/main_scene="res://menu.tscn"
+config/features=PackedStringArray("4.7")
+
+[autoload]
+
+VantaGlobal="*res://scripts/vanta_global.gd"
+MCPRuntime="*uid://b4m4o54s01o0e"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+
+[vanta]
+
+net_mode="ws"
+ws_url="wss://vanta-ws.cpxru83.workers.dev/ws?match=demo&ai=1&reset=1"

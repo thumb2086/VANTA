@@ -1,0 +1,35 @@
+{
+  "frame": "phantom",
+  "name": "Phantom ·彈鼓+重型槍托",
+  "price": 2900,
+  "mods": {
+    "mag": "drum_mag",
+    "stock": "heavy_stock"
+  },
+  "stats": {
+    "key": "phantom_mag-stock",
+    "name": "Phantom ·彈鼓+重型槍托",
+    "wclass": "rifle",
+    "price": 2900,
+    "fire_rate_rps": 11.0,
+    "mag_size": 52,
+    "reserve": 90,
+    "reload_time": 3.25,
+    "damage": 39.0,
+    "falloff": {
+      "range_min": 15,
+      "range_max": 30,
+      "dmg_max": 39,
+      "dmg_min": 31
+    },
+    "penetration_level": 2,
+    "first_shot_accuracy": 0.2,
+    "spread_per_bullet": 0.04,
+    "move_speed_mult": 0.88464,
+    "ads_spread_mult": 0.55,
+    "automatic": true,
+    "burst": 1,
+    "pellets": 1,
+    "scoped": false
+  }
+}

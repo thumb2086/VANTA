@@ -1,0 +1,29 @@
+{
+  "frame": "vandal",
+  "name": "Vandal ·防火帽",
+  "price": 2900,
+  "mods": {
+    "muzzle": "flash_hider"
+  },
+  "stats": {
+    "key": "vandal_muzzle",
+    "name": "Vandal ·防火帽",
+    "wclass": "rifle",
+    "price": 2900,
+    "fire_rate_rps": 9.75,
+    "mag_size": 25,
+    "reserve": 75,
+    "reload_time": 2.5,
+    "damage": 40.0,
+    "falloff": null,
+    "penetration_level": 2,
+    "first_shot_accuracy": 0.225,
+    "spread_per_bullet": 0.05,
+    "move_speed_mult": 0.95,
+    "ads_spread_mult": 0.55,
+    "automatic": true,
+    "burst": 1,
+    "pellets": 1,
+    "scoped": false
+  }
+}

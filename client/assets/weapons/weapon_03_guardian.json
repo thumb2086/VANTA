@@ -1,0 +1,32 @@
+{
+  "frame": "guardian",
+  "name": "Guardian ·彈鼓+消音器+輕量槍托",
+  "price": 2250,
+  "mods": {
+    "barrel": "long_barrel",
+    "mag": "drum_mag",
+    "muzzle": "suppressor",
+    "stock": "light_stock"
+  },
+  "stats": {
+    "key": "guardian_barrel-mag-muzzle-stock",
+    "name": "Guardian ·彈鼓+消音器+輕量槍托",
+    "wclass": "rifle",
+    "price": 2250,
+    "fire_rate_rps": 4.935,
+    "mag_size": 34,
+    "reserve": 36,
+    "reload_time": 3.25,
+    "damage": 68.094,
+    "falloff": null,
+    "penetration_level": 2,
+    "first_shot_accuracy": 0.2,
+    "spread_per_bullet": 0.01656,
+    "move_speed_mult": 0.93702,
+    "ads_spread_mult": 0.55,
+    "automatic": false,
+    "burst": 1,
+    "pellets": 1,
+    "scoped": false
+  }
+}

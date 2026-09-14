@@ -1,0 +1,30 @@
+{
+  "frame": "ares",
+  "name": "Ares ·2x 瞄準鏡+輕量槍托",
+  "price": 1600,
+  "mods": {
+    "sight": "scope_2x",
+    "stock": "light_stock"
+  },
+  "stats": {
+    "key": "ares_sight-stock",
+    "name": "Ares ·2x 瞄準鏡+輕量槍托",
+    "wclass": "heavy",
+    "price": 1600,
+    "fire_rate_rps": 11.96,
+    "mag_size": 50,
+    "reserve": 150,
+    "reload_time": 4.2,
+    "damage": 30.0,
+    "falloff": null,
+    "penetration_level": 2,
+    "first_shot_accuracy": 0.28,
+    "spread_per_bullet": 0.0425,
+    "move_speed_mult": 0.847875,
+    "ads_spread_mult": 0.55,
+    "automatic": true,
+    "burst": 1,
+    "pellets": 1,
+    "scoped": false
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "frame": "vandal",
+  "name": "Vandal ·2x 瞄準鏡+加長彈匣+消音器",
+  "price": 2900,
+  "mods": {
+    "mag": "extended_mag",
+    "muzzle": "suppressor",
+    "sight": "scope_2x",
+    "stock": "heavy_stock"
+  },
+  "stats": {
+    "key": "vandal_mag-muzzle-sight-stock",
+    "name": "Vandal ·2x 瞄準鏡+加長彈匣+消音器",
+    "wclass": "rifle",
+    "price": 2900,
+    "fire_rate_rps": 8.97,
+    "mag_size": 35,
+    "reserve": 75,
+    "reload_time": 2.875,
+    "damage": 38.8,
+    "falloff": null,
+    "penetration_level": 2,
+    "first_shot_accuracy": 0.175,
+    "spread_per_bullet": 0.0391,
+    "move_speed_mult": 0.8664,
+    "ads_spread_mult": 0.55,
+    "automatic": true,
+    "burst": 1,
+    "pellets": 1,
+    "scoped": false
+  }
+}

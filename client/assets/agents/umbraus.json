@@ -1,0 +1,28 @@
+{
+  "key": "umbraus",
+  "codename": "Umbraus",
+  "name": "Kai Haddad",
+  "faction": "VANGUARD",
+  "role": "controller",
+  "role_label": "控場者",
+  "desc": "以煙霧與封鎖主宰戰場節奏",
+  "bio": "以煙霧與封鎖主宰戰場節奏。信奉先發制人。代號「Umbraus」，隸屬 VANGUARD。",
+  "kit": [
+    "smoke",
+    "smoke",
+    "frag"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 0.99,
+    "shield_pref": "heavy",
+    "role_glyph": "smoke"
+  },
+  "colors": {
+    "primary": "#cae236",
+    "accent": "#5df04b",
+    "bg1": "#363b16",
+    "bg2": "#0d0a1e"
+  },
+  "seed": 224
+}

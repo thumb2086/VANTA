@@ -1,0 +1,12 @@
+{
+  "name": "bgm_victory",
+  "genre": "victory",
+  "bpm": 122,
+  "scale": "major",
+  "root_midi": 60,
+  "bars_intro": 2,
+  "bars_loop": 8,
+  "duration_sec": 19.672,
+  "loop_start_sec": 3.934,
+  "seed": 41
+}

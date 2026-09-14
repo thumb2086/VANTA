@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vanta-ws",
+  "account_id": "e54950142f6a8b045cfa0bb474af60a2",
+  "main": "src/entry.py",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": [
+    "python_workers",
+    "disable_python_external_sdk"
+  ],
+  "observability": {
+    "enabled": false
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MATCH",
+        "class_name": "MatchDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "MatchDO"
+      ]
+    }
+  ]
+}

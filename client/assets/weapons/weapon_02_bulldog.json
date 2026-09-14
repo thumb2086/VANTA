@@ -1,0 +1,35 @@
+{
+  "frame": "bulldog",
+  "name": "Bulldog ·快拔彈匣+消音器",
+  "price": 2050,
+  "mods": {
+    "mag": "quick_mag",
+    "muzzle": "suppressor"
+  },
+  "stats": {
+    "key": "bulldog_mag-muzzle",
+    "name": "Bulldog ·快拔彈匣+消音器",
+    "wclass": "rifle",
+    "price": 2050,
+    "fire_rate_rps": 9.15,
+    "mag_size": 24,
+    "reserve": 72,
+    "reload_time": 1.875,
+    "damage": 33.95,
+    "falloff": {
+      "range_min": 30,
+      "range_max": 50,
+      "dmg_max": 35,
+      "dmg_min": 31
+    },
+    "penetration_level": 2,
+    "first_shot_accuracy": 0.25,
+    "spread_per_bullet": 0.0276,
+    "move_speed_mult": 0.95,
+    "ads_spread_mult": 0.55,
+    "automatic": false,
+    "burst": 3,
+    "pellets": 1,
+    "scoped": false
+  }
+}

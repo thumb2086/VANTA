@@ -1,0 +1,30 @@
+{
+  "frame": "odin",
+  "name": "Odin ·彈鼓+重型槍托",
+  "price": 3200,
+  "mods": {
+    "mag": "drum_mag",
+    "stock": "heavy_stock"
+  },
+  "stats": {
+    "key": "odin_mag-stock",
+    "name": "Odin ·彈鼓+重型槍托",
+    "wclass": "heavy",
+    "price": 3200,
+    "fire_rate_rps": 12.0,
+    "mag_size": 122,
+    "reserve": 300,
+    "reload_time": 6.5,
+    "damage": 38.0,
+    "falloff": null,
+    "penetration_level": 2,
+    "first_shot_accuracy": 0.5,
+    "spread_per_bullet": 0.06,
+    "move_speed_mult": 0.74496,
+    "ads_spread_mult": 0.55,
+    "automatic": true,
+    "burst": 1,
+    "pellets": 1,
+    "scoped": false
+  }
+}

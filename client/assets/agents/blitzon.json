@@ -1,0 +1,28 @@
+{
+  "key": "blitzon",
+  "codename": "Blitzon",
+  "name": "Tomas Silva",
+  "faction": "IRONFANG",
+  "role": "initiator",
+  "role_label": "先鋒",
+  "desc": "情報壓制與開戰的發動機",
+  "bio": "情報壓制與開戰的發動機。戰場上從不退縮。代號「Blitzon」，隸屬 IRONFANG。",
+  "kit": [
+    "frag",
+    "flash",
+    "smoke"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 1.0,
+    "shield_pref": "light",
+    "role_glyph": "spark"
+  },
+  "colors": {
+    "primary": "#36e27b",
+    "accent": "#4bd6f0",
+    "bg1": "#163b25",
+    "bg2": "#1e0a16"
+  },
+  "seed": 300
+}

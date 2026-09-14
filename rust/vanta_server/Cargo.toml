@@ -1,0 +1,9 @@
+[package]
+name = "vanta_server"
+version = "0.1.0"
+edition = "2021"
+
+# 純 std（無 tokio）：單場 128Hz 同步迴圈 + std UDP 已足夠；
+# 多場併發的 async 化屬 M6（tokio）——誠實標註範圍。
+[dependencies]
+vanta_parity = { path = "../parity" }

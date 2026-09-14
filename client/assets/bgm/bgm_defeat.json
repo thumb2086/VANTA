@@ -1,0 +1,12 @@
+{
+  "name": "bgm_defeat",
+  "genre": "defeat",
+  "bpm": 78,
+  "scale": "minor",
+  "root_midi": 57,
+  "bars_intro": 2,
+  "bars_loop": 8,
+  "duration_sec": 30.769,
+  "loop_start_sec": 6.154,
+  "seed": 51
+}

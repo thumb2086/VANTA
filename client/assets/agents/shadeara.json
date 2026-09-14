@@ -1,0 +1,28 @@
+{
+  "key": "shadeara",
+  "codename": "Shadeara",
+  "name": "Elena Haddad",
+  "faction": "NIGHTFALL",
+  "role": "sentinel",
+  "role_label": "哨衛",
+  "desc": "陣地防守與關鍵時刻的後盾",
+  "bio": "陣地防守與關鍵時刻的後盾。擅長聲東擊西。代號「Shadeara」，隸屬 NIGHTFALL。",
+  "kit": [
+    "trap",
+    "heal",
+    "stim"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 0.98,
+    "shield_pref": "heavy",
+    "role_glyph": "trap"
+  },
+  "colors": {
+    "primary": "#e2369e",
+    "accent": "#f0634b",
+    "bg1": "#3b162c",
+    "bg2": "#0a1e12"
+  },
+  "seed": 193
+}

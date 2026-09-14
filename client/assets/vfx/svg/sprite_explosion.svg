@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+<radialGradient id="e"><stop offset="0%" stop-color="#fff" stop-opacity="0.95"/><stop offset="35%" stop-color="#ffd24a" stop-opacity="0.9"/><stop offset="75%" stop-color="#ff6a00" stop-opacity="0.6"/><stop offset="100%" stop-color="#c83000" stop-opacity="0"/></radialGradient>
+<circle cx="64.0" cy="64.0" r="61.44" fill="url(#e)"/>
+<line x1="64.0" y1="64.0" x2="117.75999999999999" y2="64.0" stroke="#ffdf80" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+<line x1="64.0" y1="64.0" x2="102.02919335042866" y2="101.99892173622447" stroke="#ffdf80" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+<line x1="64.0" y1="64.0" x2="64.04281052396902" y2="117.75998295441542" stroke="#ffdf80" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+<line x1="64.0" y1="64.0" x2="26.031373974476523" y2="102.05944084893972" stroke="#ffdf80" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+<line x1="64.0" y1="64.0" x2="10.240068182327477" y2="64.08562102079033" stroke="#ffdf80" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+<line x1="64.0" y1="64.0" x2="25.910335787423413" y2="26.061693762462696" stroke="#ffdf80" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+<line x1="64.0" y1="64.0" x2="63.871568536683746" y2="10.240153410196285" stroke="#ffdf80" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+<line x1="64.0" y1="64.0" x2="101.90796239149282" y2="25.880136577826434" stroke="#ffdf80" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+</svg>

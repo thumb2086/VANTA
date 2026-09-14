@@ -1,0 +1,39 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+dist/
+build/
+*.egg-info/
+
+# Rust
+**/target/
+
+# Godot
+client/.godot/
+client/.local/
+client/export_presets.cfg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Analysis (large videos + frames)
+analysis/
+
+# Tools output
+tools/assets/
+
+# Workers
+workers/node_modules/
+workers/.wrangler/
+
+# Temp
+*.bak
+*.log

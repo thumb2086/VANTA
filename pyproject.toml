@@ -1,0 +1,9 @@
+[project]
+name = "vanta"
+version = "0.1.0"
+description = "Open-source 5v5 tactical hero shooter — server-authoritative, Valorant-inspired"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "workers/tests"]
+addopts = "-q"

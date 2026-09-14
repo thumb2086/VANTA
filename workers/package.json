@@ -1,0 +1,12 @@
+{
+  "name": "vanta-ws",
+  "private": true,
+  "scripts": {
+    "build": "bash scripts/build.sh",
+    "dev": "bash scripts/build.sh && uvx --from workers-py pywrangler dev",
+    "deploy": "bash scripts/build.sh && uvx --from workers-py pywrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.123.0"
+  }
+}

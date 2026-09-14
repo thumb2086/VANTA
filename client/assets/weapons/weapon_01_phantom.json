@@ -1,0 +1,35 @@
+{
+  "frame": "phantom",
+  "name": "Phantom ·2x 瞄準鏡+斜角握把",
+  "price": 2900,
+  "mods": {
+    "grip": "angled_grip",
+    "sight": "scope_2x"
+  },
+  "stats": {
+    "key": "phantom_grip-sight",
+    "name": "Phantom ·2x 瞄準鏡+斜角握把",
+    "wclass": "rifle",
+    "price": 2900,
+    "fire_rate_rps": 10.12,
+    "mag_size": 30,
+    "reserve": 90,
+    "reload_time": 2.5,
+    "damage": 39.0,
+    "falloff": {
+      "range_min": 15,
+      "range_max": 30,
+      "dmg_max": 39,
+      "dmg_min": 31
+    },
+    "penetration_level": 2,
+    "first_shot_accuracy": 0.14,
+    "spread_per_bullet": 0.0306,
+    "move_speed_mult": 0.9025,
+    "ads_spread_mult": 0.55,
+    "automatic": true,
+    "burst": 1,
+    "pellets": 1,
+    "scoped": false
+  }
+}

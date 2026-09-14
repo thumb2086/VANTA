@@ -1,0 +1,104 @@
+{
+  "events": {
+    "kill": {
+      "sfx": "kill_confirm",
+      "vfx": "kill_confirm",
+      "feed": true
+    },
+    "headshot": {
+      "sfx": "headshot_confirm",
+      "vfx": "kill_confirm",
+      "feed": true
+    },
+    "multi_kill": {
+      "sfx": "multi_kill_2",
+      "vfx": "kill_confirm",
+      "announce": true
+    },
+    "damage_taken": {
+      "sfx": "damage_taken",
+      "vfx": "hit_marker_inverse"
+    },
+    "hit_confirm": {
+      "sfx": "body_hit",
+      "vfx": "hit_marker"
+    },
+    "reload": {
+      "sfx": "reload"
+    },
+    "empty_click": {
+      "sfx": "empty_click"
+    },
+    "footstep": {
+      "sfx": "footstep"
+    },
+    "landing": {
+      "sfx": "landing"
+    },
+    "ability_cast": {
+      "sfx": "ability_cast"
+    },
+    "flash_explode": {
+      "sfx": "flash_explode",
+      "vfx": "flash_burst"
+    },
+    "smoke_spawn": {
+      "sfx": "smoke_puff",
+      "vfx": "smoke_puff"
+    },
+    "trap_trigger": {
+      "sfx": "trap_trigger",
+      "vfx": "trap_trigger"
+    },
+    "concussed": {
+      "sfx": "concuss_effect",
+      "vfx": "screen_ring"
+    },
+    "blinded": {
+      "sfx": "flash_explode",
+      "vfx": "screen_white"
+    },
+    "spike_beep": {
+      "sfx": "spike_beep"
+    },
+    "spike_planting": {
+      "sfx": "ability_cast"
+    },
+    "spike_planted": {
+      "sfx": "spike_planted",
+      "vfx": "spike_icon_pulse",
+      "feed": true
+    },
+    "spike_defusing": {
+      "sfx": "ability_cast"
+    },
+    "spike_defused": {
+      "sfx": "spike_defused",
+      "vfx": "spike_icon_clear",
+      "feed": true
+    },
+    "spike_detonated": {
+      "sfx": "spike_exploded",
+      "vfx": "explosion_debris",
+      "feed": true
+    },
+    "round_win": {
+      "sfx": "round_win",
+      "vfx": "round_banner_win"
+    },
+    "round_loss": {
+      "sfx": "round_loss",
+      "vfx": "round_banner_loss"
+    },
+    "buy_success": {
+      "sfx": "ui_buy"
+    },
+    "buy_failed": {
+      "sfx": "ui_error"
+    },
+    "ui_click": {
+      "sfx": "ui_click"
+    }
+  },
+  "count": 26
+}

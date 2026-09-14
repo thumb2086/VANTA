@@ -1,0 +1,28 @@
+{
+  "key": "blitzel",
+  "codename": "Blitzel",
+  "name": "Kai Tanaka",
+  "faction": "NIGHTFALL",
+  "role": "initiator",
+  "role_label": "先鋒",
+  "desc": "情報壓制與開戰的發動機",
+  "bio": "情報壓制與開戰的發動機。信奉先發制人。代號「Blitzel」，隸屬 NIGHTFALL。",
+  "kit": [
+    "flash",
+    "frag",
+    "stim"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 1.0,
+    "shield_pref": "light",
+    "role_glyph": "spark"
+  },
+  "colors": {
+    "primary": "#e236d5",
+    "accent": "#f04b68",
+    "bg1": "#3b1638",
+    "bg2": "#0a1e0b"
+  },
+  "seed": 131
+}

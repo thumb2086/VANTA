@@ -1,0 +1,28 @@
+{
+  "key": "havocus",
+  "codename": "Havocus",
+  "name": "Kai Haddad",
+  "faction": "TEMPEST",
+  "role": "duelist",
+  "role_label": "決鬥者",
+  "desc": "先鋒突破，單兵作戰的尖刀",
+  "bio": "先鋒突破，單兵作戰的尖刀。沉默寡言但戰術精準。代號「Havocus」，隸屬 TEMPEST。",
+  "kit": [
+    "stim",
+    "flash",
+    "frag"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 1.03,
+    "shield_pref": "light",
+    "role_glyph": "flash"
+  },
+  "colors": {
+    "primary": "#3668e2",
+    "accent": "#974bf0",
+    "bg1": "#16213b",
+    "bg2": "#1e180a"
+  },
+  "seed": 324
+}

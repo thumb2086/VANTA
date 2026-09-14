@@ -1,0 +1,28 @@
+{
+  "key": "havocix",
+  "codename": "Havocix",
+  "name": "Ivy Kovac",
+  "faction": "TEMPEST",
+  "role": "controller",
+  "role_label": "控場者",
+  "desc": "以煙霧與封鎖主宰戰場節奏",
+  "bio": "以煙霧與封鎖主宰戰場節奏。總能在絕境冷靜收尾。代號「Havocix」，隸屬 TEMPEST。",
+  "kit": [
+    "smoke",
+    "trap",
+    "smoke"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 0.99,
+    "shield_pref": "heavy",
+    "role_glyph": "smoke"
+  },
+  "colors": {
+    "primary": "#36e24a",
+    "accent": "#4bf0da",
+    "bg1": "#163b1a",
+    "bg2": "#1e0a1c"
+  },
+  "seed": 162
+}

@@ -1,0 +1,379 @@
+{
+  "entry": {
+    "feed": {
+      "killer": "Phoenix",
+      "victim": "Jett",
+      "weapon": "vandal",
+      "headshot": true,
+      "streak": 3,
+      "team_kill": false,
+      "icon": "weapon_vandal",
+      "headshot_icon": "headshot"
+    },
+    "sfx": "headshot_confirm",
+    "sfx_streak": "multi_kill_3",
+    "vfx": "kill_confirm",
+    "announce": "Triple Kill"
+  },
+  "confirm_frames": [
+    {
+      "t": 0.0,
+      "scale": 0.6,
+      "alpha": 0.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.017,
+      "scale": 0.656,
+      "alpha": 0.139,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.033,
+      "scale": 0.711,
+      "alpha": 0.278,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.05,
+      "scale": 0.767,
+      "alpha": 0.417,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.067,
+      "scale": 0.822,
+      "alpha": 0.556,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.083,
+      "scale": 0.878,
+      "alpha": 0.694,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.1,
+      "scale": 0.933,
+      "alpha": 0.833,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.117,
+      "scale": 0.989,
+      "alpha": 0.972,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.133,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.15,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.167,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.183,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.2,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.217,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.233,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.25,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.267,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.283,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.3,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.317,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.333,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.35,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.367,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.383,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": "kill_confirm"
+    },
+    {
+      "t": 0.4,
+      "scale": 1.0,
+      "alpha": 1.0,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.417,
+      "scale": 1.004,
+      "alpha": 0.958,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.433,
+      "scale": 1.008,
+      "alpha": 0.917,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.45,
+      "scale": 1.012,
+      "alpha": 0.875,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.467,
+      "scale": 1.017,
+      "alpha": 0.833,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.483,
+      "scale": 1.021,
+      "alpha": 0.792,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.5,
+      "scale": 1.025,
+      "alpha": 0.75,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.517,
+      "scale": 1.029,
+      "alpha": 0.708,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.533,
+      "scale": 1.033,
+      "alpha": 0.667,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.55,
+      "scale": 1.038,
+      "alpha": 0.625,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.567,
+      "scale": 1.042,
+      "alpha": 0.583,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.583,
+      "scale": 1.046,
+      "alpha": 0.542,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.6,
+      "scale": 1.05,
+      "alpha": 0.5,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.617,
+      "scale": 1.054,
+      "alpha": 0.458,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.633,
+      "scale": 1.058,
+      "alpha": 0.417,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.65,
+      "scale": 1.062,
+      "alpha": 0.375,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.667,
+      "scale": 1.067,
+      "alpha": 0.333,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.683,
+      "scale": 1.071,
+      "alpha": 0.292,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.7,
+      "scale": 1.075,
+      "alpha": 0.25,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.717,
+      "scale": 1.079,
+      "alpha": 0.208,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.733,
+      "scale": 1.083,
+      "alpha": 0.167,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.75,
+      "scale": 1.087,
+      "alpha": 0.125,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.767,
+      "scale": 1.092,
+      "alpha": 0.083,
+      "streak": 3,
+      "particles": null
+    },
+    {
+      "t": 0.783,
+      "scale": 1.096,
+      "alpha": 0.042,
+      "streak": 3,
+      "particles": null
+    }
+  ],
+  "thresholds": [
+    {
+      "streak": 2,
+      "name": "Double Kill",
+      "sfx": "multi_kill_2"
+    },
+    {
+      "streak": 3,
+      "name": "Triple Kill",
+      "sfx": "multi_kill_3"
+    },
+    {
+      "streak": 4,
+      "name": "Quadra Kill",
+      "sfx": "multi_kill_4"
+    },
+    {
+      "streak": 5,
+      "name": "ACE!",
+      "sfx": "multi_kill_4",
+      "vfx": "ace"
+    }
+  ]
+}

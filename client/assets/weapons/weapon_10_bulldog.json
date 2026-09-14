@@ -1,0 +1,37 @@
+{
+  "frame": "bulldog",
+  "name": "Bulldog ·加長彈匣+斜角握把+短槍管",
+  "price": 2050,
+  "mods": {
+    "barrel": "short_barrel",
+    "grip": "angled_grip",
+    "mag": "extended_mag",
+    "muzzle": "compensator"
+  },
+  "stats": {
+    "key": "bulldog_barrel-grip-mag-muzzle",
+    "name": "Bulldog ·加長彈匣+斜角握把+短槍管",
+    "wclass": "rifle",
+    "price": 2050,
+    "fire_rate_rps": 9.699,
+    "mag_size": 34,
+    "reserve": 72,
+    "reload_time": 2.875,
+    "damage": 33.6,
+    "falloff": {
+      "range_min": 30,
+      "range_max": 50,
+      "dmg_max": 35,
+      "dmg_min": 31
+    },
+    "penetration_level": 2,
+    "first_shot_accuracy": 0.25,
+    "spread_per_bullet": 0.03365,
+    "move_speed_mult": 0.95,
+    "ads_spread_mult": 0.55,
+    "automatic": false,
+    "burst": 3,
+    "pellets": 1,
+    "scoped": false
+  }
+}

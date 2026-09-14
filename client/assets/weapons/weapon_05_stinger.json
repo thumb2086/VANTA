@@ -1,0 +1,36 @@
+{
+  "frame": "stinger",
+  "name": "Stinger ·加長彈匣+重槍管+防火帽",
+  "price": 1100,
+  "mods": {
+    "barrel": "heavy_barrel",
+    "mag": "extended_mag",
+    "muzzle": "flash_hider"
+  },
+  "stats": {
+    "key": "stinger_barrel-mag-muzzle",
+    "name": "Stinger ·加長彈匣+重槍管+防火帽",
+    "wclass": "smg",
+    "price": 1100,
+    "fire_rate_rps": 16.0,
+    "mag_size": 30,
+    "reserve": 60,
+    "reload_time": 2.07,
+    "damage": 27.0,
+    "falloff": {
+      "range_min": 20,
+      "range_max": 30,
+      "dmg_max": 27,
+      "dmg_min": 20
+    },
+    "penetration_level": 1,
+    "first_shot_accuracy": 0.54,
+    "spread_per_bullet": 0.0425,
+    "move_speed_mult": 0.9408,
+    "ads_spread_mult": 0.6,
+    "automatic": false,
+    "burst": 4,
+    "pellets": 1,
+    "scoped": false
+  }
+}

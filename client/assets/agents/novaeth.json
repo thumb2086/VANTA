@@ -1,0 +1,28 @@
+{
+  "key": "novaeth",
+  "codename": "Novaeth",
+  "name": "Ravi Rossi",
+  "faction": "VANGUARD",
+  "role": "controller",
+  "role_label": "控場者",
+  "desc": "以煙霧與封鎖主宰戰場節奏",
+  "bio": "以煙霧與封鎖主宰戰場節奏。總能在絕境冷靜收尾。代號「Novaeth」，隸屬 VANGUARD。",
+  "kit": [
+    "smoke",
+    "smoke",
+    "frag"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 0.99,
+    "shield_pref": "heavy",
+    "role_glyph": "smoke"
+  },
+  "colors": {
+    "primary": "#e26e36",
+    "accent": "#e3f04b",
+    "bg1": "#3b2216",
+    "bg2": "#0a171e"
+  },
+  "seed": 231
+}

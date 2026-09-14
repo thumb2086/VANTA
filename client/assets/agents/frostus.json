@@ -1,0 +1,28 @@
+{
+  "key": "frostus",
+  "codename": "Frostus",
+  "name": "Dara Tanaka",
+  "faction": "SHADOWLINE",
+  "role": "duelist",
+  "role_label": "決鬥者",
+  "desc": "先鋒突破，單兵作戰的尖刀",
+  "bio": "先鋒突破，單兵作戰的尖刀。信奉先發制人。代號「Frostus」，隸屬 SHADOWLINE。",
+  "kit": [
+    "stim",
+    "flash",
+    "frag"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 1.03,
+    "shield_pref": "light",
+    "role_glyph": "flash"
+  },
+  "colors": {
+    "primary": "#cbe236",
+    "accent": "#5ff04b",
+    "bg1": "#363b16",
+    "bg2": "#0c0a1e"
+  },
+  "seed": 100
+}

@@ -1,0 +1,28 @@
+{
+  "key": "zephyrix",
+  "codename": "Zephyrix",
+  "name": "Kai Moreau",
+  "faction": "TEMPEST",
+  "role": "initiator",
+  "role_label": "先鋒",
+  "desc": "情報壓制與開戰的發動機",
+  "bio": "情報壓制與開戰的發動機。對隊友絕對忠誠。代號「Zephyrix」，隸屬 TEMPEST。",
+  "kit": [
+    "flash",
+    "stim",
+    "trap"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 1.0,
+    "shield_pref": "light",
+    "role_glyph": "spark"
+  },
+  "colors": {
+    "primary": "#e236c3",
+    "accent": "#f04b57",
+    "bg1": "#3b1634",
+    "bg2": "#0a1e0d"
+  },
+  "seed": 331
+}

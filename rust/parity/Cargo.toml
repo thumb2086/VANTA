@@ -1,0 +1,7 @@
+[package]
+name = "vanta_parity"
+version = "0.1.0"
+edition = "2021"
+
+# 零第三方依賴：純 std，確保離線可編譯、可重現
+[dependencies]
