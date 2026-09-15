@@ -1,0 +1,2764 @@
+{
+  "version": 2,
+  "count": 58,
+  "blueprints": [
+    {
+      "id": "ability_dash",
+      "kind": "common",
+      "style": "default",
+      "label": "衝刺",
+      "duration": 0.5,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "dash_trail",
+          "at": "weapon",
+          "loop": false
+        },
+        {
+          "type": "mesh",
+          "preset": "speed_lines",
+          "at": "camera",
+          "scale": 1.0,
+          "ttl": 0.3,
+          "color": "#9fd0ff"
+        },
+        {
+          "type": "camera",
+          "preset": "kick",
+          "trauma": 0.12,
+          "ttl": 0.25,
+          "at": "screen"
+        }
+      ],
+      "audio": {
+        "sfx": "ability_cast",
+        "pitch": 1.35
+      }
+    },
+    {
+      "id": "ability_flash",
+      "kind": "common",
+      "style": "default",
+      "label": "閃光彈",
+      "duration": 0.7,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "flash_pop",
+          "at": "world"
+        },
+        {
+          "type": "light",
+          "at": "world",
+          "color": "#ffffff",
+          "energy": 12.0,
+          "range": 18.0,
+          "ttl": 0.3
+        },
+        {
+          "type": "hud",
+          "preset": "flash_white",
+          "at": "screen",
+          "ttl": 0.55,
+          "intensity": 0.85
+        }
+      ],
+      "audio": {
+        "sfx": "flash_explode",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "ability_frag",
+      "kind": "common",
+      "style": "default",
+      "label": "破片爆擊",
+      "duration": 1.0,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "explosion_debris",
+          "at": "world"
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "world",
+          "scale": 3.0,
+          "ttl": 0.5,
+          "color": "#ffb060"
+        },
+        {
+          "type": "light",
+          "at": "world",
+          "color": "#ff8a3a",
+          "energy": 10.0,
+          "range": 14.0,
+          "ttl": 0.35
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.45,
+          "ttl": 0.6,
+          "at": "screen"
+        }
+      ],
+      "audio": {
+        "sfx": "explosion",
+        "pitch": 0.95
+      }
+    },
+    {
+      "id": "ability_heal",
+      "kind": "common",
+      "style": "default",
+      "label": "治療",
+      "duration": 1.2,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "heal_aura",
+          "at": "victim"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color": "#4dffa0",
+          "energy": 2.4,
+          "range": 3.5,
+          "ttl": 1.0
+        },
+        {
+          "type": "hud",
+          "preset": "heal_pop",
+          "at": "screen",
+          "ttl": 0.4
+        }
+      ],
+      "audio": {
+        "sfx": "ability_cast",
+        "pitch": 1.18
+      }
+    },
+    {
+      "id": "ability_smoke",
+      "kind": "common",
+      "style": "default",
+      "label": "煙霧展開",
+      "duration": 1.4,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "smoke_bloom",
+          "at": "world"
+        },
+        {
+          "type": "mesh",
+          "preset": "smoke_dome",
+          "at": "world",
+          "scale": 1.0,
+          "ttl": 1.3,
+          "color": "#8f96a3"
+        }
+      ],
+      "audio": {
+        "sfx": "smoke_puff",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "death",
+      "kind": "common",
+      "style": "default",
+      "label": "陣亡",
+      "duration": 1.0,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "blood_mist",
+          "at": "victim",
+          "scale": 1.6
+        },
+        {
+          "type": "camera",
+          "preset": "slowmo",
+          "amount": 0.35,
+          "ttl": 0.9,
+          "at": "screen"
+        },
+        {
+          "type": "hud",
+          "preset": "damage_vignette",
+          "at": "screen",
+          "ttl": 1.2,
+          "intensity": 1.0
+        }
+      ],
+      "audio": {
+        "sfx": "damage_taken",
+        "pitch": 0.8,
+        "gain_db": -2.0
+      }
+    },
+    {
+      "id": "flesh_hit",
+      "kind": "common",
+      "style": "default",
+      "label": "命中肉體",
+      "duration": 0.5,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "impact_flesh",
+          "at": "impact"
+        },
+        {
+          "type": "particles",
+          "preset": "blood_mist",
+          "at": "impact",
+          "scale": 0.9
+        },
+        {
+          "type": "decal",
+          "preset": "blood_spatter",
+          "at": "impact"
+        }
+      ],
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 0.92,
+        "gain_db": -3.0
+      }
+    },
+    {
+      "id": "glass_break",
+      "kind": "common",
+      "style": "default",
+      "label": "玻璃破裂",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "impact_glass",
+          "at": "impact"
+        },
+        {
+          "type": "decal",
+          "preset": "glass_crack",
+          "at": "impact"
+        },
+        {
+          "type": "hud",
+          "preset": "flash_white",
+          "at": "screen",
+          "ttl": 0.12,
+          "intensity": 0.15
+        }
+      ]
+    },
+    {
+      "id": "headshot_marker",
+      "kind": "common",
+      "style": "default",
+      "label": "爆頭回饋",
+      "duration": 0.34,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "hud",
+          "preset": "hitmarker_headshot",
+          "at": "screen",
+          "ttl": 0.3
+        },
+        {
+          "type": "particles",
+          "preset": "headshot_shatter",
+          "at": "impact"
+        },
+        {
+          "type": "camera",
+          "preset": "punch",
+          "trauma": 0.1,
+          "ttl": 0.22,
+          "at": "screen"
+        }
+      ],
+      "audio": {
+        "sfx": "headshot_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "hit_marker",
+      "kind": "common",
+      "style": "default",
+      "label": "命中回饋",
+      "duration": 0.22,
+      "budget": 1,
+      "layers": [
+        {
+          "type": "hud",
+          "preset": "hitmarker",
+          "at": "screen",
+          "ttl": 0.22
+        },
+        {
+          "type": "particles",
+          "preset": "hit_marker",
+          "at": "impact",
+          "scale": 0.6
+        }
+      ],
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.35,
+        "gain_db": -8.0
+      }
+    },
+    {
+      "id": "impact_breath",
+      "kind": "impact",
+      "style": "breath",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "活體龍焰命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_default",
+      "kind": "impact",
+      "style": "default",
+      "duration": 0.6,
+      "budget": 1,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "基準命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_dragon",
+      "kind": "impact",
+      "style": "dragon",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "龍焰命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_energy",
+      "kind": "impact",
+      "style": "energy",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "能量命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_frost",
+      "kind": "impact",
+      "style": "frost",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "冰霜命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_glitch",
+      "kind": "impact",
+      "style": "glitch",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "故障命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_holy",
+      "kind": "impact",
+      "style": "holy",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "聖光命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_laser",
+      "kind": "impact",
+      "style": "laser",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "雷射命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_magma",
+      "kind": "impact",
+      "style": "magma",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "熔核命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_petal",
+      "kind": "impact",
+      "style": "petal",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "落櫻命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_soul",
+      "kind": "impact",
+      "style": "soul",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "噬魂命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_stardust",
+      "kind": "impact",
+      "style": "stardust",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "星塵命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "impact_venom",
+      "kind": "impact",
+      "style": "venom",
+      "duration": 0.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "impact",
+          "at": "impact",
+          "color_key": "impact_color",
+          "delay": 0.0
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "impact",
+          "scale": 0.55,
+          "ttl": 0.28,
+          "color_key": "impact_color",
+          "when_style": [
+            "energy",
+            "holy",
+            "laser",
+            "soul",
+            "magma"
+          ]
+        },
+        {
+          "type": "decal",
+          "preset_key": "decal",
+          "at": "impact",
+          "scale": 1.0,
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "impact_wall",
+          "at": "impact",
+          "scale": 0.7
+        },
+        {
+          "type": "light",
+          "at": "impact",
+          "color_key": "impact_color",
+          "energy": 1.6,
+          "range": 2.2,
+          "ttl": 0.06
+        }
+      ],
+      "label": "毒液命中",
+      "audio": {
+        "sfx": "body_hit",
+        "pitch": 1.0,
+        "gain_db": -6.0
+      }
+    },
+    {
+      "id": "kill_breath",
+      "kind": "kill",
+      "style": "breath",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "活體龍焰擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_default",
+      "kind": "kill",
+      "style": "default",
+      "duration": 1.25,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "基準擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_dragon",
+      "kind": "kill",
+      "style": "dragon",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "龍焰擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_energy",
+      "kind": "kill",
+      "style": "energy",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "能量擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_frost",
+      "kind": "kill",
+      "style": "frost",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "冰霜擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_glitch",
+      "kind": "kill",
+      "style": "glitch",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "故障擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_holy",
+      "kind": "kill",
+      "style": "holy",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "聖光擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_laser",
+      "kind": "kill",
+      "style": "laser",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "雷射擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_magma",
+      "kind": "kill",
+      "style": "magma",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "熔核擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_petal",
+      "kind": "kill",
+      "style": "petal",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "落櫻擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_soul",
+      "kind": "kill",
+      "style": "soul",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "噬魂擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_stardust",
+      "kind": "kill",
+      "style": "stardust",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "星塵擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "kill_venom",
+      "kind": "kill",
+      "style": "venom",
+      "duration": 1.25,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "victim",
+          "color_key": "kill_color",
+          "delay": 0.0
+        },
+        {
+          "type": "hud",
+          "preset": "kill_banner",
+          "at": "screen",
+          "frame_key": "banner_frame",
+          "color_key": "kill_color",
+          "style_key": "kill_style"
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 0.16,
+          "ttl": 0.32,
+          "at": "screen"
+        },
+        {
+          "type": "light",
+          "at": "victim",
+          "color_key": "kill_color",
+          "energy": 4.5,
+          "range": 5.0,
+          "ttl": 0.45
+        }
+      ],
+      "label": "毒液擊殺",
+      "audio": {
+        "sfx": "kill_confirm",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "knife_hit",
+      "kind": "common",
+      "style": "default",
+      "label": "近戰命中",
+      "duration": 0.5,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "impact_flesh",
+          "at": "impact",
+          "scale": 1.2
+        },
+        {
+          "type": "particles",
+          "slot": "kill",
+          "at": "impact",
+          "scale": 0.7,
+          "color_key": "kill_color"
+        },
+        {
+          "type": "decal",
+          "preset": "blood_hole",
+          "at": "impact"
+        },
+        {
+          "type": "camera",
+          "preset": "punch",
+          "trauma": 0.22,
+          "ttl": 0.3,
+          "at": "screen"
+        }
+      ],
+      "audio": {
+        "sfx": "knife_hit",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "knife_swing",
+      "kind": "common",
+      "style": "default",
+      "label": "近戰揮砍",
+      "duration": 0.34,
+      "budget": 1,
+      "layers": [
+        {
+          "type": "mesh",
+          "preset": "slash_arc",
+          "at": "muzzle",
+          "scale": 1.0,
+          "ttl": 0.2,
+          "color_key": "tracer_color"
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "muzzle",
+          "scale": 0.8,
+          "count": 8
+        }
+      ],
+      "audio": {
+        "sfx": "knife_swing",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "reload_done",
+      "kind": "common",
+      "style": "default",
+      "label": "換彈完成",
+      "duration": 0.3,
+      "budget": 1,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "spark",
+          "at": "weapon",
+          "count": 4,
+          "scale": 0.35
+        }
+      ],
+      "audio": {
+        "sfx": "slide_rack",
+        "pitch": 1.0,
+        "gain_db": -4.0
+      }
+    },
+    {
+      "id": "ricochet",
+      "kind": "common",
+      "style": "default",
+      "label": "跳彈",
+      "duration": 0.45,
+      "budget": 1,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "ricochet",
+          "at": "impact"
+        },
+        {
+          "type": "decal",
+          "preset": "ricochet_mark",
+          "at": "impact"
+        },
+        {
+          "type": "sound",
+          "sfx": "trap_trigger",
+          "pitch": 1.7,
+          "gain_db": -10.0
+        }
+      ]
+    },
+    {
+      "id": "round_loss",
+      "kind": "common",
+      "style": "default",
+      "label": "回合敗北",
+      "duration": 1.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "hud",
+          "preset": "round_banner_loss",
+          "at": "screen",
+          "ttl": 2.4
+        },
+        {
+          "type": "camera",
+          "preset": "desaturate",
+          "amount": 0.45,
+          "ttl": 1.2,
+          "at": "screen"
+        }
+      ],
+      "audio": {
+        "sfx": "round_loss",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "round_win",
+      "kind": "common",
+      "style": "default",
+      "label": "回合勝利",
+      "duration": 1.6,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "banner_sparkle",
+          "at": "camera"
+        },
+        {
+          "type": "hud",
+          "preset": "round_banner_win",
+          "at": "screen",
+          "ttl": 2.4
+        }
+      ],
+      "audio": {
+        "sfx": "round_win",
+        "pitch": 1.0
+      }
+    },
+    {
+      "id": "shell_drop",
+      "kind": "common",
+      "style": "default",
+      "label": "彈殼",
+      "duration": 1.2,
+      "budget": 1,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject"
+        }
+      ]
+    },
+    {
+      "id": "shot_breath",
+      "kind": "shot",
+      "style": "breath",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "活體龍焰射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_default",
+      "kind": "shot",
+      "style": "default",
+      "duration": 0.42,
+      "budget": 1,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "基準射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_dragon",
+      "kind": "shot",
+      "style": "dragon",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "龍焰射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_energy",
+      "kind": "shot",
+      "style": "energy",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "能量射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_frost",
+      "kind": "shot",
+      "style": "frost",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "冰霜射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_glitch",
+      "kind": "shot",
+      "style": "glitch",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "故障射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_holy",
+      "kind": "shot",
+      "style": "holy",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "聖光射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_laser",
+      "kind": "shot",
+      "style": "laser",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "雷射射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_magma",
+      "kind": "shot",
+      "style": "magma",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "熔核射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_petal",
+      "kind": "shot",
+      "style": "petal",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "落櫻射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_soul",
+      "kind": "shot",
+      "style": "soul",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "噬魂射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_stardust",
+      "kind": "shot",
+      "style": "stardust",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "星塵射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "shot_venom",
+      "kind": "shot",
+      "style": "venom",
+      "duration": 0.42,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "slot": "muzzle",
+          "at": "muzzle",
+          "follow": true,
+          "color_key": "muzzle_color",
+          "scale_key": "muzzle_scale",
+          "delay": 0.0
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_smoke",
+          "at": "muzzle",
+          "follow": true,
+          "delay": 0.01,
+          "color_key": "smoke_color",
+          "when_smoke": true
+        },
+        {
+          "type": "particles",
+          "preset": "muzzle_sparks",
+          "at": "muzzle",
+          "delay": 0.0,
+          "color_key": "muzzle_color",
+          "scale": 0.9
+        },
+        {
+          "type": "light",
+          "at": "muzzle",
+          "color_key": "light_color",
+          "energy_key": "light_energy",
+          "range": 4.0,
+          "ttl_key": null,
+          "ttl": 0.07
+        },
+        {
+          "type": "particles",
+          "slot": "tracer",
+          "at": "tracer",
+          "color_key": "tracer_color",
+          "scale_key": "tracer_width"
+        },
+        {
+          "type": "particles",
+          "preset": "shell_casing",
+          "at": "eject",
+          "delay": 0.02
+        }
+      ],
+      "label": "毒液射擊",
+      "audio": {
+        "slot": "fire",
+        "pitch_key": "sound_pitch",
+        "gain_key": "sound_gain_db",
+        "override_key": "sound_key"
+      }
+    },
+    {
+      "id": "spike_explode",
+      "kind": "common",
+      "style": "default",
+      "label": "Spike 爆擊",
+      "duration": 2.2,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "spike_shockwave",
+          "at": "world"
+        },
+        {
+          "type": "particles",
+          "preset": "explosion_debris",
+          "at": "world",
+          "scale": 2.2
+        },
+        {
+          "type": "particles",
+          "preset": "ember_float",
+          "at": "world",
+          "loop": true
+        },
+        {
+          "type": "mesh",
+          "preset": "shockwave",
+          "at": "world",
+          "scale": 9.0,
+          "ttl": 0.9,
+          "color": "#ffb060"
+        },
+        {
+          "type": "light",
+          "at": "world",
+          "color": "#ff8a3a",
+          "energy": 22.0,
+          "range": 40.0,
+          "ttl": 0.6
+        },
+        {
+          "type": "camera",
+          "preset": "shake",
+          "trauma": 1.0,
+          "ttl": 1.1,
+          "at": "screen"
+        },
+        {
+          "type": "hud",
+          "preset": "flash_white",
+          "at": "screen",
+          "ttl": 0.5,
+          "intensity": 0.9
+        }
+      ],
+      "audio": {
+        "sfx": "spike_exploded",
+        "pitch": 0.9
+      }
+    },
+    {
+      "id": "spike_plant",
+      "kind": "common",
+      "style": "default",
+      "label": "Spike 安放",
+      "duration": 1.8,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "spike_pulse",
+          "at": "world",
+          "loop": true
+        },
+        {
+          "type": "light",
+          "at": "world",
+          "color": "#ff5a3a",
+          "energy": 3.0,
+          "range": 5.0,
+          "ttl": 1.8
+        },
+        {
+          "type": "hud",
+          "preset": "spike_banner",
+          "at": "screen"
+        }
+      ],
+      "audio": {
+        "sfx": "spike_planted",
+        "pitch": 1.0
+      }
+    }
+  ]
+}

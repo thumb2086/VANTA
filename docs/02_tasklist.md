@@ -90,6 +90,14 @@
   **人物產生器（8 名角色 + 肖像 SVG，可直接進遊戲）** / VFX 粒子 + SVG /
   擊殺特效 + 26 事件綁定 → `python -m tools.cli all` 一鍵產生 110+ 素材
   → `scripts/demo_pipeline.py` / `scripts/demo_agents.py` 閉環驗證（生成素材進遊戲跑對戰）
+- [x] **槍皮系統 + 分層特效升級**（2026-09，詳見 `docs/09_visual_polish.md`）：
+  14 系列 / 140 造型（程序化 colorway + 14 種可無縫平鋪圖案 + Chroma 變色 + Radianite 升級）
+  → 執行期生成 albedo/emissive/detail 貼圖（規格 `TEX` 只寫在 Python 一份，Godot 逐運算式移植；
+  v2 修正「發光整片糊掉」→ 只沿結構脊線）；58 張分層特效藍圖（particles/mesh/light/decal/camera/
+  hud/sound）+ 94 粒子預設 + 18 精靈 + 14 貼花；**Armory 兵工廠**（3D 預覽／試射／檢視動畫／
+  購買／升級）；`ScreenFX` 創傷相機、FOV 踢動、擊殺暈影與皮膚化 hit marker
+  → 驗證：`tests/test_tools_skins.py`（78 項，含 Godot 跨語言契約）＋ `tests/test_tools_vfx_fx.py`
+  ＋ gdparse/gdlint 全綠；協定零改動（外觀不入網路封包）
 - [x] **Godot 4 客戶端渲染層**（`client/`，詳見 `docs/04_godot_client.md`）：
   UDP 協定客戶端（與 Python 位元級相容，parity 測試鎖定）、客戶端預測、快照插值與
   伺服器和解、工具鏈地圖/音效/粒子載入、HUD（準星/擊殺訊息/連殺/Spike）、

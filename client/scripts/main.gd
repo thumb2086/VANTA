@@ -17,7 +17,13 @@ var vfx_mgr: VFXManager = null
 var world_render: RenderWorld = null
 var gallery: AgentGallery = null
 var cam: Camera3D = null
-var viewmodel: WeaponViewModel = null
+var viewmodel: WeaponViewmodelV2 = null
+var fx2: FxManager = null
+var screen_fx: ScreenFx = null
+var skin_reg: SkinRegistry = null
+var skin_prog: SkinProgression = null
+var _skin_res: Dictionary = {}
+var _skin_rev := -1
 var local := LocalMovement.new()
 
 var asset_index := {}
@@ -64,11 +70,19 @@ func _ready() -> void:
 	add_child(cam)
 	cam.make_current()
 	# 第一人稱武器視角模型（程序化組裝 + 動畫）
-	viewmodel = WeaponViewModel.new()
+	viewmodel = WeaponViewmodelV2.new()
+	viewmodel.name = "Viewmodel"
 	cam.add_child(viewmodel)
 	viewmodel.position = Vector3(0.24, -0.22, -0.45)
 	vfx_mgr = VFXManager.new()
 	add_child(vfx_mgr)
+	# 皮膚分層特效（資料驅動）+ 螢幕後鏡頭手感
+	fx2 = FxManager.new()
+	fx2.name = "FxLayer"
+	add_child(fx2)
+	screen_fx = ScreenFx.new()
+	screen_fx.name = "ScreenFx"
+	add_child(screen_fx)
 	audio_mgr = AudioManager.new()
 	add_child(audio_mgr)
 	var hud_layer := CanvasLayer.new()
@@ -113,6 +127,7 @@ func _ready() -> void:
 	var bindings: Dictionary = _load_json("res://assets/fx/event_bindings.json")
 	audio_mgr.setup(asset_index, bindings)
 	vfx_mgr.setup(asset_index)
+	_setup_skins()
 	world_render.spawn_players()
 	# BGM：預設戰鬥曲（工具鏈產生）
 	audio_mgr.set_bgm("bgm_combat")
@@ -190,10 +205,98 @@ func _ready() -> void:
 	if spawns.size() > 0:
 		local.pos = Vector3(spawns[0]["x"], spawns[0]["y"], spawns[0]["z"])
 	# 初始視角模型（副武器）
-	viewmodel.build_weapon(1, _palette(), 3)  # Classic 手槍
+	_apply_skin()   # 初始視角模型（含皮膚材質/貼圖/發光件）
 	# 換彈里程碑音效（與伺服器進度精確對齊）
 	viewmodel.reload_mag_drop.connect(func(): audio_mgr.play("mag_drop", 1.0, -4.0))
 	viewmodel.reload_rack.connect(func(): audio_mgr.play("slide_rack", 1.0, -6.0))
+
+
+## 載入槍皮目錄、玩家收藏，並把特效/HUD/螢幕特效接起來
+func _setup_skins() -> void:
+	skin_reg = SkinRegistry.shared()
+	if not skin_reg.ready:
+		push_warning("[main] 槍皮目錄缺失，使用標準外觀（執行 python3 -m tools.cli all 產生）")
+	if has_node("/root/VantaGlobal"):
+		var g := get_node("/root/VantaGlobal")
+		if g.has_method("get_skin_progression"):
+			skin_prog = g.call("get_skin_progression")
+	if skin_prog == null:
+		skin_prog = SkinProgression.new()
+		skin_prog.name = "SkinProgression"
+		add_child(skin_prog)
+	fx2.setup(skin_reg, cam, screen_fx, audio_mgr, hud)
+	fx2.quality = 2 if _gfx_quality_high() else 1
+	fx2.muzzle_light = true
+	screen_fx.camera = cam
+	screen_fx.base_fov = cam.fov
+	screen_fx.configure(1.0, 1 if not _gfx_quality_high() else 2)
+	if skin_prog != null and skin_prog.has_signal("skin_equipped"):
+		skin_prog.skin_equipped.connect(func(_w, _i): _apply_skin())
+		if skin_prog.has_signal("skin_upgraded"):
+			skin_prog.skin_upgraded.connect(func(_i, _l): _apply_skin())
+
+
+func _gfx_quality_high() -> bool:
+	return bool(ProjectSettings.get_setting("vanta/graphics/high_fx", true))
+
+
+## 目前武器的 key（快照優先，退回槽位推定）
+func _weapon_key() -> String:
+	var w: Dictionary = net.players.get(net.slot, {}).get("weapon", {})
+	var k := String(w.get("key", ""))
+	if k != "":
+		return k
+	var slot: int = int(net.players.get(net.slot, {}).get("weapon_slot", 1))
+	match slot:
+		0: return "phantom"
+		2: return "knife"
+		_: return "classic"
+
+
+## 依目前裝備的皮膚重建視角模型 + 特效色
+func _apply_skin() -> void:
+	if viewmodel == null:
+		return
+	var slot: int = int(net.players.get(net.slot, {}).get("weapon_slot", 1))
+	var wid := _slot_to_weapon_id(slot)
+	var key := _weapon_key()
+	var res: Dictionary = {}
+	if skin_prog != null and skin_reg != null and skin_reg.ready:
+		res = skin_prog.resolve_current(key, wid)
+	if res.is_empty() and skin_reg != null and skin_reg.ready:
+		res = skin_reg.resolve("", {"weapon": key})
+	_skin_res = res
+	if fx2 != null:
+		fx2.set_skin_resolution(res)
+	viewmodel.fx_mgr = fx2
+	viewmodel.build_weapon(slot, _palette(), wid, res)
+	viewmodel.set_skin_resolution(res)
+
+
+## 射擊命中點（Physical 層 → 彈孔/命中特效放在正確的表面上）
+func _shoot_impact(dir: Vector3) -> Dictionary:
+	var from: Vector3 = cam.global_position + dir * 0.55
+	var to: Vector3 = cam.global_position + dir * 130.0
+	var out := {"point": to, "normal": -dir, "dist": 130.0}
+	var space := get_world_3d().direct_space_state
+	if space == null:
+		return out
+	var q := PhysicsRayQueryParameters3D.create(from, to)
+	q.collide_with_areas = false
+	q.collide_with_bodies = true
+	var hit: Dictionary = space.intersect_ray(q)
+	if not hit.is_empty():
+		out["point"] = hit.position
+		out["normal"] = hit.normal
+		out["dist"] = cam.global_position.distance_to(hit.position)
+		if hit.has("collider"):
+			out["collider"] = hit.collider
+	return out
+
+
+func _skin_fx_color(key: String, fallback: String) -> Color:
+	var fx: Dictionary = _skin_res.get("fx", {})
+	return SkinRegistry.hex_color(fx.get(key, fallback), SkinRegistry.hex_color(fallback))
 
 
 func _process(delta: float) -> void:
@@ -332,21 +435,41 @@ func _unhandled_input(event: InputEvent) -> void:
 					return   # 買槍/結算階段不可開火（伺服器也不處理）
 				net.send_shot(_yaw, _pitch)
 				# 開火動畫：刀是揮砍，槍是後座
-				if net.players.get(net.slot, {}).get("weapon_slot", 1) == 2:
+				var is_knife: bool = net.players.get(net.slot, {}).get("weapon_slot", 1) == 2
+				var aim_dir: Vector3 = -cam.global_transform.basis.z
+				if is_knife:
 					viewmodel.play_knife()
-					audio_mgr.play_synth("knife", 1.0, -8.0)
+					var sfx_k := String(_skin_res.get("fx", {}).get("sound_key", ""))
+					audio_mgr.play_synth("knife_swing" if sfx_k == "" else sfx_k,
+						float(_skin_res.get("fx", {}).get("sound_pitch", 1.0)), -8.0)
 				else:
 					viewmodel.play_fire(randf_range(0.5, 1.0))
-					# 合成槍聲（依武器 key 決定音色）
+					# 合成槍聲：武器音色 + 皮膚招牌音色（工具鏈 SFX_REGISTRY）
 					var wk2: String = net.players.get(net.slot, {}).get("weapon", {}).get("key", "classic")
-					audio_mgr.play_synth(wk2, 1.0, -10.0)
-					# 彈道散布增加
+					var sfx: Dictionary = _skin_res.get("fx", {})
+					var pitch := float(sfx.get("sound_pitch", 1.0))
+					var gain := float(sfx.get("sound_gain_db", 0.0))
+					audio_mgr.play_synth(wk2, pitch, -10.0 + gain * 0.5)
+					var skey := String(sfx.get("sound_key", ""))
+					if skey != "":
+						audio_mgr.play_synth(skey, pitch, gain - 4.0)
 					hud.spread_angle = minf(hud.spread_angle + 1.5, 5.0)
-				vfx_mgr.spawn("muzzle_flash", cam.global_position + -cam.global_transform.basis.z * 0.6)
-				# 子彈軌跡（從槍口朝瞄準方向延伸）
-				var tracer_origin: Vector3 = cam.global_position + -cam.global_transform.basis.z * 0.8
-				var tracer_dir: Vector3 = -cam.global_transform.basis.z
-				vfx_mgr.spawn_tracer(tracer_origin, tracer_dir, 30.0)
+				# 命中點（射線）→ 槍口/曳光/彈孔/命中特效全部放對位置
+				var impact := _shoot_impact(aim_dir)
+				if fx2 != null and not _skin_res.is_empty():
+					fx2.fire(viewmodel.muzzle_transform(), aim_dir, impact, _skin_res, is_knife)
+				else:
+					vfx_mgr.spawn("muzzle_flash", cam.global_position + aim_dir * 0.6)
+					vfx_mgr.spawn_tracer(cam.global_position + aim_dir * 0.8, aim_dir, 30.0)
+				if not is_knife and float(impact.get("dist", 99.0)) < 55.0 and fx2 != null:
+					fx2.play(skin_reg.impact_blueprint(_skin_res) if skin_reg != null else "impact_default", {
+						"impact": impact.get("point", Vector3.ZERO),
+						"normal": impact.get("normal", Vector3.UP),
+						"dir": aim_dir, "res": _skin_res,
+						"scale": float(_skin_res.get("fx", {}).get("muzzle_scale", 1.0)),
+					})
+				if screen_fx != null:
+					screen_fx.add_trauma(0.035 if not is_knife else 0.02)
 			MOUSE_BUTTON_RIGHT:
 				viewmodel.set_ads(true)
 	elif event is InputEventMouseButton and not event.pressed \
@@ -476,31 +599,40 @@ func _reconcile() -> void:
 func _consume_events() -> void:
 	for ev in net.events:
 		match int(ev["event"]):
-		NetClient.EV_KILL:
-			var killer := int(ev["p0"])
-			var victim := int(ev["p1"])
-			hud.push_feed("P%02d 擊殺 P%02d" % [killer, victim])
-			var vp: Vector3 = net.players.get(victim, {}).get("pos", Vector3.ZERO)
-			if vp != Vector3.ZERO:
-				vfx_mgr.spawn("kill_confirm", vp + Vector3(0, 1, 0))
-			if killer == net.slot and victim != net.slot:
-				# 我的擊殺：橫幅 + 紅 X + 連殺語音 + hitmarker
-				var wk: String = net.players.get(net.slot, {}).get("weapon", {}).get("key", "")
-				hud.killflash(false)
-				hud.show_kill_banner("P%02d" % victim, false, wk)
-				audio_mgr.play_hitmarker()
-				audio_mgr.play_kill()
-			elif victim == net.slot:
-				audio_mgr.play("damage_taken", 0.9, -2.0)
-				# 死亡旁觀畫面
-				var killer_name := "P%02d" % killer
-				var killer_wk: String = ""
-				var killer_pos: Vector3 = net.players.get(killer, {}).get("pos", Vector3.ZERO)
-				var my_pos: Vector3 = net.players.get(net.slot, {}).get("pos", Vector3.ZERO)
-				var dist := killer_pos.distance_to(my_pos)
-				if _death_overlay:
-					_death_overlay.set_own_info(net.slot, 0 if net.slot < 5 else 1)
-					_death_overlay.show_death(killer_name, killer_wk, false, dist)
+			NetClient.EV_KILL:
+				var killer := int(ev["p0"])
+				var victim := int(ev["p1"])
+				hud.push_feed("P%02d 擊殺 P%02d" % [killer, victim])
+				var vp: Vector3 = net.players.get(victim, {}).get("pos", Vector3.ZERO)
+				if vp != Vector3.ZERO:
+					vfx_mgr.spawn("kill_confirm", vp + Vector3(0, 1, 0))
+				if killer == net.slot and victim != net.slot:
+					# 我的擊殺：橫幅 + 紅 X + 連殺語音 + hitmarker + 皮膚擊殺特效
+					var wk: String = net.players.get(net.slot, {}).get("weapon", {}).get("key", "")
+					hud.killflash(false)
+					if fx2 == null or _skin_res.is_empty():
+						hud.show_kill_banner("P%02d" % victim, false, wk)
+					audio_mgr.play_hitmarker()
+					audio_mgr.play_kill()
+					if fx2 != null and not _skin_res.is_empty():
+						fx2.play(skin_reg.kill_blueprint(_skin_res), {
+							"victim": vp + Vector3(0, 1.0, 0), "impact": vp + Vector3(0, 1.0, 0),
+							"victim_name": "P%02d" % victim, "res": _skin_res, "hud": hud,
+							"scale": 1.0 + 0.06 * int(_skin_res.get("level", 1)),
+						})
+					if screen_fx != null:
+						screen_fx.on_kill(_skin_fx_color("kill_color", "#ffdd66"))
+				elif victim == net.slot:
+					audio_mgr.play("damage_taken", 0.9, -2.0)
+					# 死亡旁觀畫面
+					var killer_name := "P%02d" % killer
+					var killer_wk: String = ""
+					var killer_pos: Vector3 = net.players.get(killer, {}).get("pos", Vector3.ZERO)
+					var my_pos: Vector3 = net.players.get(net.slot, {}).get("pos", Vector3.ZERO)
+					var dist := killer_pos.distance_to(my_pos)
+					if _death_overlay:
+						_death_overlay.set_own_info(net.slot, 0 if net.slot < 5 else 1)
+						_death_overlay.show_death(killer_name, killer_wk, false, dist)
 			NetClient.EV_SPIKE_PLANTED:
 				hud.announce("Spike 已安放！", Color(1.0, 0.3, 0.3))
 				audio_mgr.play_event(NetClient.EV_SPIKE_PLANTED)
@@ -526,11 +658,11 @@ func _consume_events() -> void:
 				# 賽後結算頁面
 				var won := net.match_score_a > net.match_score_b if net.slot < 5 else net.match_score_b > net.match_score_a
 				if _match_results and _match_results.visible == false:
-					var round_records: Array = []
-					if net.has_method("get_round_records"):
-						round_records = net.get_round_records()
-					_match_results.show_results(won, net.match_score_a, net.match_score_b,
-						round_records, net.players, net.slot, 0 if net.slot < 5 else 1)
+				var round_records: Array = []
+				if net.has_method("get_round_records"):
+					round_records = net.get_round_records()
+				_match_results.show_results(won, net.match_score_a, net.match_score_b,
+					round_records, net.players, net.slot, 0 if net.slot < 5 else 1)
 	net.events.clear()
 
 
@@ -541,10 +673,17 @@ func _update_viewmodel(delta: float) -> void:
 		return
 	var slot: int = me.get("weapon_slot", viewmodel.weapon_slot)
 	if slot != viewmodel.weapon_slot:
-		var wid := _slot_to_weapon_id(slot)
-		viewmodel.build_weapon(slot, _palette(), wid)
+		viewmodel.play_switch_out()
+		_apply_skin()
 		viewmodel.play_switch_in()
 		audio_mgr.play("vandalreload", 0.8, -6.0)
+	# 軍械庫換裝／升級 → 即時生效
+	if has_node("/root/VantaGlobal"):
+		var g2 := get_node("/root/VantaGlobal")
+		var rev := int(g2.get("skin_revision"))
+		if rev != _skin_rev:
+			_skin_rev = rev
+			_apply_skin()
 	var reloading: bool = me.get("reloading", false)
 	if reloading and not _was_reloading:
 		viewmodel.begin_reload_from_server()
@@ -568,6 +707,15 @@ func _slot_to_weapon_id(slot: int) -> int:
 
 
 func _palette() -> Dictionary:
+	# 已裝備皮膚 → 用皮膚色板（保持 UI/預覽與遊戲內一致）
+	if not _skin_res.is_empty():
+		var cw: Dictionary = _skin_res.get("colorway", {})
+		return {
+			"primary": SkinRegistry.hex_color(cw.get("primary", "#2b2f38"), Color(0.25, 0.27, 0.32)),
+			"accent": SkinRegistry.hex_color(cw.get("accent", "#ff7a35"), Color(0.85, 0.4, 0.25)),
+			"skin_name": String(_skin_res.get("name", "")),
+			"weapon_key": _weapon_key(),
+		}
 	# 從武器工坊讀取自訂配色
 	if has_node("/root/VantaGlobal"):
 		var g := get_node("/root/VantaGlobal")
@@ -678,8 +826,21 @@ func _update_camera(delta: float) -> void:
 	cam.global_position = cur.lerp(target, 1.0 - exp(-20.0 * delta))
 	cam.look_at(cam.global_position + aim, Vector3.UP)
 	# FOV 縮放（開鏡時 90→50）
-	var target_fov := 50.0 if viewmodel._ads > 0.5 else 90.0
+	var ads_t: float = viewmodel._ads
+	var scoped := ads_t > 0.5 and _weapon_key() in ["operator", "marshal", "outlaw"]
+	var target_fov := 50.0 if ads_t > 0.5 else 90.0
 	cam.fov = lerpf(cam.fov, target_fov, 1.0 - exp(-10.0 * delta))
+	# 螢幕後特效：創傷式震動 / 暗角 / 速度線（由 ScreenFx 供應偏移量）
+	if screen_fx != null:
+		var pd: Dictionary = net.players.get(net.slot, {})
+		var hp := float(pd.get("hp", pd.get("health", 100)))
+		screen_fx.ads_amount = ads_t
+		screen_fx.speed_amount = clampf(local.vel.length() / 6.2, 0.0, 1.0)
+		screen_fx.low_health = clampf(1.0 - hp / 100.0, 0.0, 1.0) * 0.85
+		screen_fx.set_scope(scoped)
+		cam.global_position += screen_fx.position_offset()
+		cam.rotation.z = screen_fx.roll()
+		cam.fov = clampf(cam.fov + screen_fx.fov_delta(), 45.0, 120.0)
 
 
 func _load_json(path: String) -> Dictionary:

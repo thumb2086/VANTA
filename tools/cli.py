@@ -5,6 +5,8 @@ tools/cli.py — VANTA 素材產生工具鏈 CLI
     python -m tools.cli init                    # 建立 assets/ 目錄
     python -m tools.cli sfx                     # 產生全部音效 WAV
     python -m tools.cli vfx                     # 產生粒子定義 + SVG 貼圖
+    python -m tools.cli vfx2                    # 分層特效蓝图（v2）
+    python -m tools.cli skins                   # 槍皮目錄 + 系列卡
     python -m tools.cli weapons --count 12      # 產生 seed 武器 JSON
     python -m tools.cli maps --seeds 1 2 3      # 產生程序化地圖 JSON
     python -m tools.cli fx                      # 產生擊殺特效 + 事件綁定表
@@ -87,22 +89,93 @@ def cmd_agents(count: int = 8, seed: int = 100) -> AssetManifest:
     return man
 
 
-def cmd_vfx() -> AssetManifest:
+# 只有這幾個「舊版客戶端 `vfx_manager.gd` 直接讀檔」的預設需要預烘福影格。
+# 其餘預設由 FxManager 依參數在執行期生成：全部預烘焙 = 94 份模擬影格傾印
+# （實測 24 MB、單檔 145k 行），既撐爆 repo 也拖慢工具鏈，而且每次改參數都要重跑。
+CLIENT_PREBAKED = frozenset({
+    "blood", "explosion_debris", "hit_marker", "kill_confirm", "muzzle_flash",
+    "shell_casing", "smoke_puff", "spark", "tracer",
+})
+
+
+def cmd_vfx(prebake_all: bool = False) -> AssetManifest:
     from tools.schema import write_json
     from tools.vfx import particles, svg
 
     man = AssetManifest()
-    # 粒子定義
-    for name, em in sorted(particles.PRESETS.items()):
+    names = (sorted(particles.PRESETS) if prebake_all
+             else sorted(CLIENT_PREBAKED & set(particles.PRESETS)))
+    out_dir = _paths("vfx", "particles")
+    os.makedirs(out_dir, exist_ok=True)
+    keep = {f"{n}.json" for n in names}
+    for stale in os.listdir(out_dir):          # 此目錄為工具鏈獨有：先收回上次產物
+        if stale.endswith(".json") and stale not in keep:
+            os.remove(os.path.join(out_dir, stale))
+    for name in names:
+        em = particles.PRESETS[name]
         path = _paths("vfx", "particles", f"{name}.json")
-        write_json(path, {"emitter": particles.to_dict(em), "frames": particles.animate_frames(em, seed=0)})
+        # indent=None：影格傾印是純機器輸出（單檔可達 3 萬行），壓成一行才不會
+        # 每次參數微調都在 diff 裡刷掉幾萬行——真正該被審閱的是上面的 emitter 參數。
+        write_json(path, {"emitter": particles.to_dict(em),
+                          "frames": particles.animate_frames(em, seed=0)}, indent=None)
         man.add("vfx_particles", os.path.relpath(path, ASSETS_ROOT))
     # SVG 貼圖
     for name, fn in sorted(svg.VFX_SVG_REGISTRY.items()):
         path = _paths("vfx", "svg", f"{name}.svg")
         svg.write_svg(path, fn({}))
         man.add("vfx_svg", os.path.relpath(path, ASSETS_ROOT))
-    print(f"  [vfx] 產生 {len(particles.PRESETS)} 個粒子特效 + {len(svg.VFX_SVG_REGISTRY)} 個 SVG 貼圖")
+    print(f"  [vfx] 粒子預烘福 {len(names)}/{len(particles.PRESETS)} 個預設"
+          f"（其餘執行期生成）+ {len(svg.VFX_SVG_REGISTRY)} 個 SVG 貼圖")
+    return man
+
+
+def cmd_vfx2() -> AssetManifest:
+    """產生 v2 素材：分層蓝图 + 精靈/貼花定義 + 槍皮目录。"""
+    from tools.schema import write_json
+    from tools.vfx.blueprints import BLUEPRINTS
+    from tools.vfx.decals import DECALS
+    from tools.vfx.sprites import SPRITES
+
+    man = AssetManifest()
+    p1 = _paths("vfx", "blueprints.json")
+    write_json(p1, {"version": 2, "count": len(BLUEPRINTS),
+                    "blueprints": [BLUEPRINTS[k] for k in sorted(BLUEPRINTS)]})
+    man.add("vfx_blueprints", os.path.relpath(p1, ASSETS_ROOT))
+    p2 = _paths("vfx", "sprites.json")
+    write_json(p2, {"sprites": [SPRITES[k] for k in sorted(SPRITES)]})
+    man.add("vfx_sprites", os.path.relpath(p2, ASSETS_ROOT))
+    p3 = _paths("vfx", "decals.json")
+    write_json(p3, {"decals": [DECALS[k] for k in sorted(DECALS)]})
+    man.add("vfx_decals", os.path.relpath(p3, ASSETS_ROOT))
+    print(f"  [vfx2] 產生 {len(BLUEPRINTS)} 個分層特效蓝图 + "
+          f"{len(SPRITES)} 個精靈 + {len(DECALS)} 個貼花")
+    return man
+
+
+def cmd_skins(textures: bool = False, texture_size: int = 256) -> AssetManifest:
+    """產生槍皮目錄（skins.json）＋系列卡（SVG）＋選用工欲程序化貼圖。"""
+    from tools.skins import emit as skins_emit
+    from tools.skins.catalog import validate_catalog
+    from tools.vfx.blueprints import validate_blueprints
+    from tools.vfx.particles import validate_presets
+
+    issues = validate_catalog() + validate_presets() + validate_blueprints()
+    for i in issues:
+        print(f"    ! 資料問題 {i}")
+    if issues:
+        print(f"  [skins] 資料問題 {len(issues)} 項（仍繼續輸出，以免阻斷管線）")
+
+    out = skins_emit.emit(_paths("skins"), textures=textures, texture_size=texture_size)
+    man = AssetManifest()
+    rel = os.path.relpath(out["catalog"], ASSETS_ROOT)
+    man.add("skins", rel)
+    for c in out["cards"]:
+        man.add("skin_cards", os.path.relpath(c, ASSETS_ROOT))
+    for t in out["textures"]:
+        man.add("skin_textures", os.path.relpath(t, ASSETS_ROOT))
+    extra = f"，{len(out['textures'])} 張貼圖" if out["textures"] else ""
+    print(f"  [skins] {out['collections']} 個系列 / {out['skins']} 個造型 + "
+          f"{len(out['cards'])} 張系列卡{extra}")
     return man
 
 
@@ -200,7 +273,13 @@ def main(argv: list[str] | None = None) -> int:
     ag = sub.add_parser("agents", help="產生程序化角色")
     ag.add_argument("--count", type=int, default=8)
     ag.add_argument("--seed", type=int, default=100)
-    sub.add_parser("vfx", help="產生粒子定義 + SVG 貼圖")
+    pv = sub.add_parser("vfx", help="產生粒子定義 + SVG 貼圖")
+    pv.add_argument("--prebake-all", action="store_true",
+                    help="為每個粒子預設烘出模擬影格（體積大，僅供離線分析）")
+    sub.add_parser("vfx2", help="產生分層特效蓝图 + 精靈/貼花定義")
+    sk = sub.add_parser("skins", help="產生槍皮目錄 + 系列卡（可 --textures 輸出 PNG）")
+    sk.add_argument("--textures", action="store_true", help="額外輸出程序化 PNG 貼圖")
+    sk.add_argument("--texture-size", type=int, default=256)
     w = sub.add_parser("weapons", help="產生模組化武器")
     w.add_argument("--count", type=int, default=12)
     m = sub.add_parser("maps", help="產生程序化地圖")
@@ -221,7 +300,11 @@ def main(argv: list[str] | None = None) -> int:
     elif args.cmd == "agents":
         write_manifest([cmd_agents(args.count, args.seed)])
     elif args.cmd == "vfx":
-        write_manifest([cmd_vfx()])
+        write_manifest([cmd_vfx(args.prebake_all)])
+    elif args.cmd == "vfx2":
+        write_manifest([cmd_vfx2()])
+    elif args.cmd == "skins":
+        write_manifest([cmd_skins(args.textures, args.texture_size)])
     elif args.cmd == "weapons":
         write_manifest([cmd_weapons(args.count)])
     elif args.cmd == "maps":
@@ -229,8 +312,8 @@ def main(argv: list[str] | None = None) -> int:
     elif args.cmd == "fx":
         write_manifest([cmd_fx()])
     elif args.cmd == "all":
-        men = [cmd_sfx(), cmd_bgm(), cmd_agents(8), cmd_vfx(), cmd_weapons(12),
-               cmd_maps([1, 7, 42]), cmd_fx()]
+        men = [cmd_sfx(), cmd_bgm(), cmd_agents(8), cmd_vfx(), cmd_vfx2(), cmd_skins(),
+               cmd_weapons(12), cmd_maps([1, 7, 42]), cmd_fx()]
         write_manifest(men)
     elif args.cmd == "manifest":
         write_manifest([AssetManifest()])

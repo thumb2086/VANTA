@@ -37,3 +37,6 @@ workers/.wrangler/
 # Temp
 *.bak
 *.log
+
+# 選配：烘焙過的槍皮貼圖（可由工具鏈重生，不入版控）
+client/assets/skins/textures/

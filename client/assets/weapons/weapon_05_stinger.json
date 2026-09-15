@@ -12,16 +12,16 @@
     "name": "Stinger ·加長彈匣+重槍管+防火帽",
     "wclass": "smg",
     "price": 1100,
-    "fire_rate_rps": 16.0,
+    "fire_rate_rps": 18.0,
     "mag_size": 30,
     "reserve": 60,
     "reload_time": 2.07,
     "damage": 27.0,
     "falloff": {
       "range_min": 20,
-      "range_max": 30,
+      "range_max": 50,
       "dmg_max": 27,
-      "dmg_min": 20
+      "dmg_min": 22
     },
     "penetration_level": 1,
     "first_shot_accuracy": 0.54,

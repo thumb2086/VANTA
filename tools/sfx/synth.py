@@ -258,6 +258,118 @@ def ui_error() -> list[float]:
     return tone(220.0, 0.12, 0.3, "square", release=0.1)
 
 
+
+# --------------------------------------------------------------------- #
+# 槍皮招牌音效（skin signature shots）
+# --------------------------------------------------------------------- #
+# 每套高級造型在《特戰英豪》都有獨特射擊音色。這裡以「合成簽名」描述：
+#   crack  : 高頻爆裂的起始頻率（Hz，越低越悶）
+#   body   : 低頻軀體衰減率（越大越短促）
+#   tonal  : 附加純音頻率（0 = 無），製造「能量／雷射」感
+#   tonal2 : 二次泛音頻率
+#   sweep  : 音高滑動倍率（>1 上揚、<1 下沈）
+#   tail   : 餘韻長度（秒）
+#   grit   : 失真強度（0..1）
+#   gain   : 輸出增益
+SKIN_SIGNATURES: dict[str, dict] = {
+    "reaver_shot": {"crack": 900.0, "body": 30.0, "tonal": 110.0, "tonal2": 0.0,
+                    "sweep": 0.62, "tail": 0.30, "grit": 0.45, "gain": 1.0},
+    "prime_shot": {"crack": 1500.0, "body": 40.0, "tonal": 320.0, "tonal2": 640.0,
+                   "sweep": 1.35, "tail": 0.16, "grit": 0.12, "gain": 0.95},
+    "sentinels_shot": {"crack": 1750.0, "body": 34.0, "tonal": 880.0, "tonal2": 1320.0,
+                       "sweep": 1.2, "tail": 0.26, "grit": 0.05, "gain": 0.9},
+    "dragon_roar": {"crack": 520.0, "body": 16.0, "tonal": 78.0, "tonal2": 132.0,
+                    "sweep": 0.7, "tail": 0.55, "grit": 0.75, "gain": 1.1},
+    "elderflame_shot": {"crack": 470.0, "body": 14.0, "tonal": 62.0, "tonal2": 124.0,
+                        "sweep": 0.66, "tail": 0.62, "grit": 0.8, "gain": 1.15},
+    "glitch_shot": {"crack": 2100.0, "body": 60.0, "tonal": 440.0, "tonal2": 466.0,
+                    "sweep": 1.9, "tail": 0.10, "grit": 0.6, "gain": 0.85},
+    "laser_shot": {"crack": 2400.0, "body": 70.0, "tonal": 1600.0, "tonal2": 2400.0,
+                   "sweep": 0.45, "tail": 0.12, "grit": 0.0, "gain": 0.8},
+    "ice_shot": {"crack": 1900.0, "body": 48.0, "tonal": 1560.0, "tonal2": 2340.0,
+                 "sweep": 1.5, "tail": 0.22, "grit": 0.08, "gain": 0.85},
+    "venom_shot": {"crack": 700.0, "body": 24.0, "tonal": 180.0, "tonal2": 0.0,
+                   "sweep": 0.8, "tail": 0.34, "grit": 0.35, "gain": 0.95},
+    "stardust_shot": {"crack": 1600.0, "body": 36.0, "tonal": 1046.0, "tonal2": 1568.0,
+                      "sweep": 1.28, "tail": 0.30, "grit": 0.04, "gain": 0.85},
+    "araxys_shot": {"crack": 600.0, "body": 20.0, "tonal": 92.0, "tonal2": 150.0,
+                    "sweep": 0.74, "tail": 0.42, "grit": 0.6, "gain": 1.05},
+    "katana_swing": {"crack": 2600.0, "body": 90.0, "tonal": 0.0, "tonal2": 0.0,
+                     "sweep": 1.1, "tail": 0.18, "grit": 0.02, "gain": 0.7},
+}
+
+
+def skin_shot(style: str = "reaver_shot") -> list[float]:
+    """槍皮招牌射擊聲：爆裂 + 低頻軀體 + 音高滑動 + 可選失真與餘韻。"""
+    import math
+
+    p = SKIN_SIGNATURES.get(style)
+    if p is None:
+        return gunshot("rifle")
+    dur = 0.10 + p["tail"]
+    n = int(dur * SAMPLE_RATE)
+    grit = p["grit"]
+    crack = []
+    for i in range(int(n * 0.08)):
+        t = i / SAMPLE_RATE
+        v = _rng.uniform(-1.0, 1.0)
+        if grit > 0.0:
+            v = math.tanh(v * (1.0 + grit * 4.0))
+        crack.append(v)
+    crack = envelope_exp(highpass(crack, max(200.0, p["crack"] * 0.5)), p["body"] * 2.2)
+    body = envelope_exp(lowpass(_noise(int(n * 0.8)), 900.0), p["body"])
+    # 音高滑動的純音層（能量/雷射感）
+    tonal = []
+    if p["tonal"] > 0:
+        m = int(n * 0.7)
+        for i in range(m):
+            t = i / SAMPLE_RATE
+            f = p["tonal"] * (p["sweep"] ** (i / max(1, m)))
+            tonal.append(0.35 * math.sin(math.tau * f * t))
+        tonal = envelope_exp(tonal, 18.0)
+    harmonic = []
+    if p["tonal2"] > 0:
+        m = int(n * 0.45)
+        for i in range(m):
+            t = i / SAMPLE_RATE
+            f = p["tonal2"] * (p["sweep"] ** (i / max(1, m)))
+            harmonic.append(0.16 * math.sin(math.tau * f * t))
+        harmonic = envelope_exp(harmonic, 26.0)
+    out = mix([s * 0.85 for s in crack], [s * 0.7 for s in body],
+              [s * 0.5 for s in tonal], [s * 0.3 for s in harmonic])
+    peak = max((abs(v) for v in out), default=1.0) or 1.0
+    k = min(1.0, 0.95 / peak) * p["gain"]
+    return [v * k for v in out]
+
+
+def knife_swing() -> list[float]:
+    """揮刀：短促呼嘯（帶通噪聲 + 快速滑音）。"""
+    import math
+
+    n = int(0.16 * SAMPLE_RATE)
+    whoosh = envelope_exp(bandpass(_noise(n), 1400.0, 5200.0), 22.0)
+    ring = [0.0] * n
+    for i in range(n):
+        t = i / SAMPLE_RATE
+        f = 2400.0 + 1800.0 * (i / n)
+        ring[i] = 0.12 * math.sin(math.tau * f * t) * (1.0 - i / n)
+    return mix(whoosh, ring)
+
+
+def knife_hit() -> list[float]:
+    """匕首命中：低沈濕音 + 金屬撞擊。"""
+    thud = envelope_exp(lowpass(_noise(int(0.07 * SAMPLE_RATE)), 420.0), 34.0)
+    tick = envelope_exp(highpass(_noise(int(0.02 * SAMPLE_RATE)), 3200.0), 700.0)
+    return mix([s * 1.0 for s in thud], [s * 0.5 for s in tick])
+
+
+def bandpass(x: list[float], low: float, high: float) -> list[float]:
+    """极简带通：低通減去更低低通（够用，不引入外部 DSP 相依）。"""
+    lo = lowpass(x, low)
+    hi = lowpass(x, high)
+    return [hi[i] - lo[i] for i in range(len(hi))]
+
+
 # --------------------------------------------------------------------- #
 # 註冊表：名稱 → 合成函式（CLI / 事件綁定共用）
 # --------------------------------------------------------------------- #
@@ -296,4 +408,19 @@ SFX_REGISTRY: dict[str, callable] = {
     "ui_click": ui_click,
     "ui_buy": ui_buy,
     "ui_error": ui_error,
+    # 槍皮招牌音效（依 SKIN_SIGNATURES 自動註冊）
+    "reaver_shot": (lambda s="reaver_shot": skin_shot(s)),
+    "prime_shot": (lambda s="prime_shot": skin_shot(s)),
+    "sentinels_shot": (lambda s="sentinels_shot": skin_shot(s)),
+    "dragon_roar": (lambda s="dragon_roar": skin_shot(s)),
+    "elderflame_shot": (lambda s="elderflame_shot": skin_shot(s)),
+    "glitch_shot": (lambda s="glitch_shot": skin_shot(s)),
+    "laser_shot": (lambda s="laser_shot": skin_shot(s)),
+    "ice_shot": (lambda s="ice_shot": skin_shot(s)),
+    "venom_shot": (lambda s="venom_shot": skin_shot(s)),
+    "stardust_shot": (lambda s="stardust_shot": skin_shot(s)),
+    "araxys_shot": (lambda s="araxys_shot": skin_shot(s)),
+    "katana_swing": (lambda s="katana_swing": skin_shot(s)),
+    "knife_swing": knife_swing,
+    "knife_hit": knife_hit,
 }

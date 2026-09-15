@@ -198,3 +198,26 @@ python -m tools.godot.serve --ai
 ---
 
 **報告完成** ✅
+
+---
+
+## 2026-09-15 增量：視覺品質（槍皮 / 特效 / 手感）
+
+| 項目 | 數量 | 來源 |
+|---|---|---|
+| 武器造型 | 140（14 系列，含 Chroma 變色、Radianite 升級、磨損） | `tools/skins/catalog.py` |
+| 可平鋪圖案 | 14（carbon/cracks/hex/scales/nebula/…） | `tools/skins/patterns.py` |
+| 貼圖規格 | `TEX` v2（發光只沿結構脊線） | `tools/skins/emit.py` ⇄ `client/scripts/procedural_texture.gd` |
+| 特效藍圖 | 58（圖層型別 7 種、掛點 10 種） | `tools/vfx/blueprints.py` |
+| 粒子預設／精靈／貼花 | 94 / 18 / 14 | `tools/vfx/{particles,sprites,decals}.py` |
+| 匯出素材 | 131 → `client/assets/`（`asset_index.json` + `.export_manifest.json`） | `tools/godot/export.py` |
+| 新 UI | Armory 兵工廠（3D 預覽、試射、檢視動畫、購買/升級） | `client/scripts/armory.gd` |
+
+**驗證**：`python3 -m pytest -q tests/ workers/tests/` → 僅剩 11 failed / 1 error，
+全部為環境因素（沙箱無 UDP bind、無 Rust 執行檔、無 node），與 2026-08 基準一致；
+新增 `tests/test_tools_skins.py`（78 項）與 `tests/test_tools_vfx_fx.py` vfx2 段落全綠。
+客戶端腳本以 `gdparse` 逐檔驗證（本環境無 Godot 執行期），`client/tests/test_all.gd`
+Suite2 清單已納入 10 支新腳本。
+
+**協定影響**：無。`server/netcode/protocol.py` 與 `client/scripts/net_client.gd` 未改，
+位元級 parity 測試維持綠燈；造型為純客戶端本機狀態（`user://skin_progression.json`）。
