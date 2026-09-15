@@ -26,6 +26,14 @@ var sfx_volume := 80
 var music_volume := 60
 # 畫質
 var fov := 90
+# 輔助功能
+var colorblind_mode := 0       # 0=None, 1=Protanopia, 2=Deuteranopia, 3=Tritanopia
+var font_size_index := 1       # 0=Small(12), 1=Medium(14), 2=Large(16)
+var subtitles_on := true
+var accessibility_master_vol := 1.0
+var accessibility_sfx_vol := 0.8
+var accessibility_bgm_vol := 0.6
+var graphics_quality := 1      # 0=Low, 1=Medium, 2=High
 
 var _preview_crosshair: Control
 
@@ -107,7 +115,7 @@ func _build_category_panel() -> PanelContainer:
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 4)
 	panel.add_child(vbox)
-	for cat in ["🎯 遊戲", "🔫 準心", "🔊 音量", "🖥 畫質"]:
+	for cat in ["🎯 遊戲", "🔫 準心", "🔊 音量", "🖥 畫質", "♿ 輔助"]:
 		var btn := Button.new()
 		btn.text = cat
 		btn.custom_minimum_size = Vector2(0, 36)
@@ -156,6 +164,15 @@ func _build_settings_panel() -> ScrollContainer:
 	content.add_child(_slider_setting("主音量", 0, 100, master_volume, func(v): master_volume = int(v)))
 	content.add_child(_slider_setting("音效音量", 0, 100, sfx_volume, func(v): sfx_volume = int(v)))
 	content.add_child(_slider_setting("音樂音量", 0, 100, music_volume, func(v): music_volume = int(v)))
+	# ── 輔助功能 ──
+	content.add_child(_section_header("♿ 輔助功能"))
+	content.add_child(_option_setting("色盲模式", ["無", "紅色盲", "綠色盲", "藍色盲"], colorblind_mode, func(v): colorblind_mode = v))
+	content.add_child(_option_setting("字體大小", ["小 (12)", "中 (14)", "大 (16)"], font_size_index, func(v): font_size_index = v))
+	content.add_child(_toggle_setting("字幕", subtitles_on, func(v): subtitles_on = v))
+	content.add_child(_slider_setting("輔助主音量", 0.0, 1.0, accessibility_master_vol, func(v): accessibility_master_vol = v))
+	content.add_child(_slider_setting("輔助音效音量", 0.0, 1.0, accessibility_sfx_vol, func(v): accessibility_sfx_vol = v))
+	content.add_child(_slider_setting("輔助背景音樂", 0.0, 1.0, accessibility_bgm_vol, func(v): accessibility_bgm_vol = v))
+	content.add_child(_option_setting("畫質", ["低", "中", "高"], graphics_quality, func(v): graphics_quality = v))
 	# ── 套用按鈕 ──
 	var apply_btn := Button.new()
 	apply_btn.text = "💾 套用設定"
@@ -321,6 +338,26 @@ func _toggle_setting(label: String, current: bool, callback: Callable) -> HBoxCo
 	return hbox
 
 
+func _option_setting(label: String, options: Array, current: int, callback: Callable) -> HBoxContainer:
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 12)
+	var lbl := Label.new()
+	lbl.text = label
+	lbl.custom_minimum_size = Vector2(160, 0)
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", TEXT_DIM)
+	hbox.add_child(lbl)
+	var option_btn := OptionButton.new()
+	option_btn.add_theme_font_size_override("font_size", 13)
+	for opt in options:
+		option_btn.add_item(opt)
+	option_btn.selected = current
+	option_btn.custom_minimum_size = Vector2(120, 30)
+	option_btn.item_selected.connect(func(idx): callback.call(idx))
+	hbox.add_child(option_btn)
+	return hbox
+
+
 func _apply_settings() -> void:
 	# 保存到 VantaGlobal
 	if has_node("/root/VantaGlobal"):
@@ -335,6 +372,13 @@ func _apply_settings() -> void:
 		g.crosshair_dot = crosshair_dot
 		g.crosshair_style = crosshair_style
 		g.fov = fov
+		g.colorblind_mode = colorblind_mode
+		g.font_size_index = font_size_index
+		g.subtitles_on = subtitles_on
+		g.master_volume = accessibility_master_vol
+		g.sfx_volume = accessibility_sfx_vol
+		g.bgm_volume = accessibility_bgm_vol
+		g.graphics_quality = graphics_quality
 	# 更新 InfoLabel
 	var info: Label = get_node_or_null("InfoLabel")
 	if info:

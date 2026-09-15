@@ -1614,7 +1614,7 @@ class _BrimOrbitalStrike(_AbilityZone):
                     p.apply_damage(self.damage, source_slot=-1, weapon_key="orbital_strike")
 
     def event_dict(self) -> dict:
-        remaining_delay = maxf(0.0, self.time_left - (self.duration - self.delay))
+        remaining_delay = max(0.0, self.time_left - (self.duration - self.delay))
         return {
             "effect": "frag",
             "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
@@ -1891,3 +1891,406 @@ def enhanced_brim_orbital_strike(world, caster_slot, aim_dir):
     strike = _DelayedStrike(target_pos, p.team, 5.0, 150.0, 2.0)
     world.deployables.append(strike)
     world.event_log.append(f"orbital_strike: slot{caster_slot} targeting {target_pos}")
+
+
+# ─── Viper Enhanced Effects ──────────────────────────────────
+
+class _ToxicWall(_AbilityZone):
+    """Toxic Screen — line deployable that applies DECAY to enemies crossing it."""
+
+    def __init__(self, origin: Vec3, direction: Vec3, length: float, duration: float, team: int):
+        self.origin = origin
+        self.direction = direction
+        self.length = length
+        super().__init__(origin, 2.5, duration, team)
+
+    def update(self, dt: float, world) -> None:
+        super().update(dt, world)
+        if not self.expired:
+            for slot, p in enumerate(world.players):
+                if not p.alive or p.team == self.team:
+                    continue
+                # Project player onto the wall line and check distance
+                to_player = p.pos - self.origin
+                proj = to_player.x * self.direction.x + to_player.z * self.direction.z
+                if 0.0 <= proj <= self.length:
+                    perp = Vec3(to_player.x - self.direction.x * proj, 0,
+                                to_player.z - self.direction.z * proj)
+                    if perp.length_sq() <= self.radius * self.radius:
+                        p.status.apply(DECAY, 0.5, 1.0)
+
+    def event_dict(self) -> dict:
+        end = self.origin + self.direction * self.length
+        return {
+            "effect": "toxic_wall",
+            "origin": {"x": self.origin.x, "y": self.origin.y, "z": self.origin.z},
+            "end": {"x": end.x, "y": end.y, "z": end.z},
+            "radius": self.radius,
+            "time_left": self.time_left,
+            "team": self.team,
+        }
+
+
+class _ViperToxicScreen(_AbilityZone):
+    """Toxic Screen — visual indicator for the toxic gas wall."""
+
+    def __init__(self, origin: Vec3, direction: Vec3, length: float, duration: float, team: int):
+        super().__init__(origin, 2.5, duration, team)
+        self.direction = direction
+        self.length = length
+
+    def event_dict(self) -> dict:
+        end = self.origin + self.direction * self.length
+        return {
+            "effect": "toxic_wall",
+            "origin": {"x": self.origin.x, "y": self.origin.y, "z": self.origin.z},
+            "end": {"x": end.x, "y": end.y, "z": end.z},
+            "radius": self.radius,
+            "time_left": self.time_left,
+            "team": self.team,
+        }
+
+
+class _ViperPit(_AbilityZone):
+    """Viper's Pit — massive dome that applies DECAY and reduces enemy vision."""
+
+    def __init__(self, center: Vec3, radius: float, duration: float, team: int):
+        super().__init__(center, radius, duration, team)
+
+    def update(self, dt: float, world) -> None:
+        super().update(dt, world)
+        if not self.expired:
+            for slot, p in enumerate(world.players):
+                if not p.alive or p.team == self.team:
+                    continue
+                if p.pos.distance_to(self.center) <= self.radius:
+                    p.status.apply(DECAY, 0.5, 1.0)
+                    p.status.apply(NEARSIGHT, 0.5, 0.0)
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "viper_pit",
+            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "radius": self.radius,
+            "time_left": self.time_left,
+            "team": self.team,
+        }
+
+
+# ─── Sova Enhanced Effects ───────────────────────────────────
+
+class _ReconZone(_AbilityZone):
+    """Recon Bolt — pulses every 2s revealing enemies, tracks pulse count."""
+
+    def __init__(self, center: Vec3, radius: float, duration: float, team: int):
+        super().__init__(center, radius, duration, team)
+        self.pulse_interval = 2.0
+        self.pulse_timer = 0.0
+        self.max_pulses = 3
+        self.pulses_done = 0
+
+    def update(self, dt: float, world) -> None:
+        super().update(dt, world)
+        if not self.expired:
+            self.pulse_timer += dt
+            if self.pulse_timer >= self.pulse_interval:
+                self.pulse_timer -= self.pulse_interval
+                self.pulses_done += 1
+                if self.pulses_done <= self.max_pulses:
+                    for slot, p in enumerate(world.players):
+                        if not p.alive or p.team == self.team:
+                            continue
+                        if p.pos.distance_to(self.center) <= self.radius:
+                            p.status.apply(REVEALED, 1.5, 1.0)
+                    # Additional pulse event
+                    if hasattr(world, 'ability_events_extra'):
+                        world.ability_events_extra.append({
+                            "effect": "recon_pulse",
+                            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+                            "radius": self.radius,
+                            "pulse": self.pulses_done,
+                            "team": self.team,
+                        })
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "recon",
+            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "radius": self.radius,
+            "time_left": self.time_left,
+            "pulse": self.pulses_done,
+            "team": self.team,
+        }
+
+
+class _SovaReconBoltEffect(_AbilityZone):
+    """Recon Bolt — visual indicator on landing spot."""
+
+    def __init__(self, center: Vec3, radius: float, duration: float, team: int):
+        super().__init__(center, radius, duration, team)
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "recon",
+            "center": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "radius": self.radius,
+            "time_left": self.time_left,
+            "team": self.team,
+        }
+
+
+class _HunterFuryEffect(_AbilityZone):
+    """Hunter's Fury — visual indicator for energy blasts."""
+
+    def __init__(self, origin: Vec3, direction: Vec3, team: int):
+        super().__init__(origin, 2.0, 0.6, team)
+        self.direction = direction
+
+    def event_dict(self) -> dict:
+        end = self.origin + self.direction * 20.0
+        return {
+            "effect": "hunter_fury",
+            "origin": {"x": self.origin.x, "y": self.origin.y, "z": self.origin.z},
+            "end": {"x": end.x, "y": end.y, "z": end.z},
+            "team": self.team,
+        }
+
+
+# ─── Omen Enhanced Effects ───────────────────────────────────
+
+class _OmenTeleportEffect(_AbilityZone):
+    """Shrouded Step — teleport windup visual effect."""
+
+    def __init__(self, origin: Vec3, dest: Vec3, team: int):
+        super().__init__(origin, 1.0, 0.5, team)
+        self.dest = dest
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "teleport",
+            "from": {"x": self.center.x, "y": self.center.y, "z": self.center.z},
+            "to": {"x": self.dest.x, "y": self.dest.y, "z": self.dest.z},
+            "duration": self.time_left,
+            "team": self.team,
+        }
+
+
+# ─── Breach Enhanced Effects ─────────────────────────────────
+
+class _BreachFaultLine(_AbilityZone):
+    """Fault Line — stun line through walls."""
+
+    def __init__(self, origin: Vec3, direction: Vec3, length: float, team: int):
+        super().__init__(origin, 2.0, 0.3, team)
+        self.direction = direction
+        self.length = length
+        self.applied = False
+
+    def update(self, dt: float, world) -> None:
+        super().update(dt, world)
+        if not self.applied and not self.expired:
+            self.applied = True
+            for slot, p in enumerate(world.players):
+                if not p.alive or p.team == self.team:
+                    continue
+                to_player = p.pos - self.origin
+                proj = to_player.x * self.direction.x + to_player.z * self.direction.z
+                if 0.0 <= proj <= self.length:
+                    perp = Vec3(to_player.x - self.direction.x * proj, 0,
+                                to_player.z - self.direction.z * proj)
+                    if perp.length_sq() <= 4.0:
+                        p.status.apply(CONCUSS, 3.0, 1.0)
+                        p.apply_damage(30.0, source_slot=-1, weapon_key="fault_line")
+
+    def event_dict(self) -> dict:
+        end = self.origin + self.direction * self.length
+        return {
+            "effect": "fault_line",
+            "origin": {"x": self.origin.x, "y": self.origin.y, "z": self.origin.z},
+            "end": {"x": end.x, "y": end.y, "z": end.z},
+            "team": self.team,
+        }
+
+
+class _BreachFaultLineEffect(_AbilityZone):
+    """Fault Line — visual indicator for the stun line."""
+
+    def __init__(self, origin: Vec3, direction: Vec3, length: float, team: int):
+        super().__init__(origin, 2.0, 0.3, team)
+        self.direction = direction
+        self.length = length
+
+    def event_dict(self) -> dict:
+        end = self.origin + self.direction * self.length
+        return {
+            "effect": "fault_line",
+            "origin": {"x": self.origin.x, "y": self.origin.y, "z": self.origin.z},
+            "end": {"x": end.x, "y": end.y, "z": end.z},
+            "team": self.team,
+        }
+
+
+# ─── Neon Enhanced Effects ───────────────────────────────────
+
+class _NeonSprintEffect(_AbilityZone):
+    """High Gear — speed boost visual indicator."""
+
+    def __init__(self, slot: int, duration: float, team: int):
+        super().__init__(Vec3.ZERO, 0.5, duration, team)
+        self.slot = slot
+
+    def event_dict(self) -> dict:
+        return {
+            "effect": "sprint",
+            "slot": self.slot,
+            "time_left": self.time_left,
+            "team": self.team,
+        }
+
+
+# ─── Enhanced Viper Abilities ────────────────────────────────
+
+def enhanced_viper_toxic_screen(world, caster_slot, aim_dir):
+    """Enhanced Toxic Screen: line of toxic gas — blocks LOS, applies DECAY."""
+    p = world.players[caster_slot]
+    origin = p.pos + Vec3(0, 1.0, 0)
+    wall_length = 20.0
+    # Spawn deployable toxic wall
+    toxic_wall = _ToxicWall(origin, aim_dir, wall_length, 8.0, p.team)
+    world.deployables.append(toxic_wall)
+    mgr = _ensure_effect_manager(world)
+    zone = _ViperToxicScreen(origin, aim_dir, wall_length, 8.0, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("toxic_wall",
+        origin={"x": origin.x, "y": origin.y, "z": origin.z},
+        direction={"x": aim_dir.x, "y": aim_dir.y, "z": aim_dir.z},
+        length=wall_length, duration=8.0, team=p.team))
+    world.event_log.append(f"toxic_screen: slot{caster_slot} wall from {origin}")
+
+
+def enhanced_viper_pit(world, caster_slot, aim_dir):
+    """Enhanced Viper's Pit: massive dome — DECAY + reduced vision, 12s."""
+    p = world.players[caster_slot]
+    center = p.pos + Vec3(0, 0.5, 0)
+    radius = 10.0
+    duration = 12.0
+    mgr = _ensure_effect_manager(world)
+    zone = _ViperPit(center, radius, duration, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("viper_pit",
+        center={"x": center.x, "y": center.y, "z": center.z},
+        radius=radius, duration=duration, team=p.team))
+    world.event_log.append(f"viper_pit: slot{caster_slot} dome at {center}")
+
+
+# ─── Enhanced Sova Abilities ─────────────────────────────────
+
+def enhanced_sova_recon_bolt(world, caster_slot, aim_dir):
+    """Enhanced Recon Bolt: projectile that lands, pulses every 2s revealing enemies."""
+    p = world.players[caster_slot]
+    origin = p.pos + Vec3(0, 1.5, 0) + aim_dir * 0.5
+    vel = aim_dir * 16.0 + Vec3(0, 3.0, 0)
+    world.spawn_projectile(
+        Projectile(origin, vel, p.team, behavior="recon_bolt",
+            owner_slot=caster_slot,
+            params={"radius": 8.0, "duration": 6.0})
+    )
+    mgr = _ensure_effect_manager(world)
+    t_land = 0.6
+    land_pos = origin + vel * t_land
+    land_pos = Vec3(land_pos.x, 0.3, land_pos.z)
+    zone = _ReconZone(land_pos, 8.0, 6.0, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("recon",
+        center={"x": land_pos.x, "y": land_pos.y, "z": land_pos.z},
+        radius=8.0, duration=6.0, team=p.team))
+    world.event_log.append(f"recon_bolt: slot{caster_slot} landed at {land_pos}")
+
+
+def enhanced_sova_hunter_fury(world, caster_slot, aim_dir):
+    """Enhanced Hunter's Fury: 3 energy blasts through walls, 80 dmg each."""
+    p = world.players[caster_slot]
+    origin = p.pos + Vec3(0, 1.5, 0)
+    blast_radius = 2.0
+    blast_damage = 80.0
+    import math
+    for i in range(3):
+        # Slight spread between blasts
+        offset_angle = (i - 1) * 3.0
+        rad = math.radians(offset_angle)
+        cos_a = math.cos(rad)
+        sin_a = math.sin(rad)
+        blast_dir = Vec3(
+            aim_dir.x * cos_a - aim_dir.z * sin_a,
+            aim_dir.y,
+            aim_dir.x * sin_a + aim_dir.z * cos_a,
+        )
+        world.spawn_projectile(
+            Projectile(origin, blast_dir * 40.0, p.team,
+                gravity=0.0, fuse_time=0.3, damage=blast_damage,
+                explosion_radius=blast_radius, behavior="line_hit",
+                owner_slot=caster_slot,
+                params={"radius": blast_radius, "damage": blast_damage,
+                        "through_walls": True})
+        )
+    mgr = _ensure_effect_manager(world)
+    zone = _HunterFuryEffect(origin, aim_dir, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("hunter_fury",
+        origin={"x": origin.x, "y": origin.y, "z": origin.z},
+        direction={"x": aim_dir.x, "y": aim_dir.y, "z": aim_dir.z},
+        blasts=3, damage=blast_damage, team=p.team))
+    world.event_log.append(f"hunter_fury: slot{caster_slot} 3 blasts from {origin}")
+
+
+# ─── Enhanced Omen Abilities ─────────────────────────────────
+
+def enhanced_omen_teleport(world, caster_slot, aim_dir):
+    """Enhanced Shrouded Step: instant teleport 15m, 0.5s windup with NEARSIGHT."""
+    p = world.players[caster_slot]
+    origin = p.pos + Vec3(0, 0, 0)
+    dest = origin + aim_dir * 15.0
+    # Apply NEARSIGHT to self during windup
+    p.status.apply(NEARSIGHT, 0.5, 0.0)
+    mgr = _ensure_effect_manager(world)
+    zone = _OmenTeleportEffect(origin, dest, p.team)
+    mgr.add_zone(zone)
+    # Teleport after windup (immediate for simplicity, windup is visual only)
+    p.pos = dest
+    p.vel = Vec3()
+    mgr.emit_event(AbilityEffectEvent("teleport",
+        from_pos={"x": origin.x, "y": origin.y, "z": origin.z},
+        to={"x": dest.x, "y": dest.y, "z": dest.z},
+        windup=0.5, team=p.team))
+    world.event_log.append(f"omen_teleport: slot{caster_slot} {origin} -> {dest}")
+
+
+# ─── Enhanced Breach Abilities ───────────────────────────────
+
+def enhanced_breach_fault_line(world, caster_slot, aim_dir):
+    """Enhanced Fault Line: stun line through walls — CONCUSS 3s + 30 damage."""
+    p = world.players[caster_slot]
+    origin = p.pos + Vec3(0, 1.0, 0)
+    line_length = 10.0
+    mgr = _ensure_effect_manager(world)
+    zone = _BreachFaultLine(origin, aim_dir, line_length, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("fault_line",
+        origin={"x": origin.x, "y": origin.y, "z": origin.z},
+        direction={"x": aim_dir.x, "y": aim_dir.y, "z": aim_dir.z},
+        length=line_length, team=p.team))
+    world.event_log.append(f"fault_line: slot{caster_slot} line from {origin}")
+
+
+# ─── Enhanced Neon Abilities ─────────────────────────────────
+
+def enhanced_neon_sprint(world, caster_slot, aim_dir):
+    """Enhanced High Gear: SPEED_BOOST 1.3x for 8s."""
+    p = world.players[caster_slot]
+    p.status.apply(SPEED_BOOST, 8.0, 1.3)
+    mgr = _ensure_effect_manager(world)
+    zone = _NeonSprintEffect(caster_slot, 8.0, p.team)
+    mgr.add_zone(zone)
+    mgr.emit_event(AbilityEffectEvent("sprint",
+        slot=caster_slot, duration=8.0, multiplier=1.3, team=p.team))
+    world.event_log.append(f"neon_sprint: slot{caster_slot} speed boost 1.3x for 8s")

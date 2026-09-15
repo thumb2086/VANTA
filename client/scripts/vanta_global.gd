@@ -47,3 +47,12 @@ var crosshair_outline := false
 var crosshair_dot := true
 var crosshair_style := 0
 var fov := 90
+
+# 輔助功能設定（由 settings_menu.gd 寫入）
+var colorblind_mode := 0       # 0=None, 1=Protanopia, 2=Deuteranopia, 3=Tritanopia
+var font_size_index := 1       # 0=Small(12), 1=Medium(14), 2=Large(16)
+var subtitles_on := true
+var master_volume := 1.0
+var sfx_volume := 0.8
+var bgm_volume := 0.6
+var graphics_quality := 1      # 0=Low, 1=Medium, 2=High
