@@ -39,5 +39,6 @@ renderer/rendering_method.mobile="gl_compatibility"
 
 [vanta]
 
+graphics/high_fx=true
 net_mode="ws"
 ws_url="wss://vanta-ws.cpxru83.workers.dev/ws?match=demo&ai=1&reset=1"

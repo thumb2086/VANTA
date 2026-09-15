@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b3armory0skin"]
+
+[ext_resource type="Script" path="res://scripts/armory.gd" id="1_armory"]
+
+[node name="Armory" type="Node"]
+script = ExtResource("1_armory")

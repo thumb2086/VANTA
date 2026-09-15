@@ -216,8 +216,8 @@ func update_smokes(net: NetClient) -> void:
 				var mat: StandardMaterial3D = n.get_child(0).material_override
 				if mat:
 					if time_left < 2.0 and time_left > 0.0:
-					mat.albedo_color.a = lerpf(0.0, 0.85, time_left / 2.0)
-					mat.emission_energy_multiplier = lerpf(0.0, 0.3, time_left / 2.0)
+						mat.albedo_color.a = lerpf(0.0, 0.85, time_left / 2.0)
+						mat.emission_energy_multiplier = lerpf(0.0, 0.3, time_left / 2.0)
 					else:
 						mat.albedo_color.a = 0.85
 						mat.emission_energy_multiplier = 0.3

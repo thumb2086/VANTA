@@ -404,6 +404,7 @@ func _build_top_bar() -> Control:
 	var icon_data := [
 		{"icon": "🏆", "action": func(): get_tree().change_scene_to_file("res://social_ui.tscn")},
 		{"icon": "🎒", "action": func(): _show_inventory()},
+		{"icon": "🛡", "action": func(): get_tree().change_scene_to_file("res://armory.tscn")},
 		{"icon": "🛒", "action": func(): get_tree().change_scene_to_file("res://workshop.tscn")},
 		{"icon": "📊", "action": func(): _show_stats()},
 	]
@@ -488,7 +489,10 @@ func _show_inventory() -> void:
 	var bg := ColorRect.new()
 	bg.color = Color(0, 0, 0, 0.8)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.gui_input.connect(func(e): if e is InputEventMouseButton and e.pressed: popup.queue_free())
+	bg.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed:
+			popup.queue_free()
+	)
 	popup.add_child(bg)
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
@@ -567,7 +571,10 @@ func _show_stats() -> void:
 	var bg := ColorRect.new()
 	bg.color = Color(0, 0, 0, 0.8)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.gui_input.connect(func(e): if e is InputEventMouseButton and e.pressed: popup.queue_free())
+	bg.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed:
+			popup.queue_free()
+	)
 	popup.add_child(bg)
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
@@ -1251,7 +1258,10 @@ func _open_invite_popup(slot_idx: int) -> void:
 	var bg := ColorRect.new()
 	bg.color = Color(0, 0, 0, 0.7)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.gui_input.connect(func(e): if e is InputEventMouseButton and e.pressed: popup.queue_free())
+	bg.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed:
+			popup.queue_free()
+	)
 	popup.add_child(bg)
 	# 彈窗面板
 	var panel := PanelContainer.new()

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="270" viewBox="0 0 480 270">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0c2412"/>
+      <stop offset="60%" stop-color="#0a0c12"/>
+      <stop offset="100%" stop-color="#5aa0f0" stop-opacity="0.35"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="70%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#a8ff5c" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#a8ff5c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="480" height="270" fill="url(#bg)"/>
+  <rect width="480" height="270" fill="url(#glow)"/>
+  <rect x="0" y="0" width="480" height="4" fill="#5aa0f0"/>
+  <text x="28" y="58" font-family="sans-serif" font-size="30" font-weight="700"
+        fill="#f2f4f8">毒素之牙</text>
+  <text x="28" y="82" font-family="sans-serif" font-size="14" letter-spacing="3"
+        fill="#38ff7a">VIPER'S BITE</text>
+  <text x="28" y="112" font-family="sans-serif" font-size="12" fill="#9aa2b2">豪華 ｜ 10 把武器</text>
+  <text x="28" y="140" font-family="sans-serif" font-size="12" fill="#c3cad8" opacity="0.85">蛇牙造型的供彈機構，注入的不是火藥，是能溶解護甲的毒。</text>
+  <rect x="28.0" y="196.0" width="38.4" height="26" rx="3" fill="#0c2412" stroke="#38ff7a" stroke-width="1" opacity="0.95"/><rect x="28.0" y="224.0" width="38.4" height="4" rx="2" fill="#5aa0f0"/><rect x="70.4" y="196.0" width="38.4" height="26" rx="3" fill="#0c2412" stroke="#38ff7a" stroke-width="1" opacity="0.95"/><rect x="70.4" y="224.0" width="38.4" height="4" rx="2" fill="#5aa0f0"/><rect x="112.8" y="196.0" width="38.4" height="26" rx="3" fill="#0c2412" stroke="#38ff7a" stroke-width="1" opacity="0.95"/><rect x="112.8" y="224.0" width="38.4" height="4" rx="2" fill="#5aa0f0"/><rect x="155.2" y="196.0" width="38.4" height="26" rx="3" fill="#0c2412" stroke="#38ff7a" stroke-width="1" opacity="0.95"/><rect x="155.2" y="224.0" width="38.4" height="4" rx="2" fill="#5aa0f0"/><rect x="197.6" y="196.0" width="38.4" height="26" rx="3" fill="#0c2412" stroke="#38ff7a" stroke-width="1" opacity="0.95"/><rect x="197.6" y="224.0" width="38.4" height="4" rx="2" fill="#5aa0f0"/><rect x="240.0" y="196.0" width="38.4" height="26" rx="3" fill="#0c2412" stroke="#38ff7a" stroke-width="1" opacity="0.95"/><rect x="240.0" y="224.0" width="38.4" height="4" rx="2" fill="#5aa0f0"/><rect x="282.4" y="196.0" width="38.4" height="26" rx="3" fill="#0c2412" stroke="#38ff7a" stroke-width="1" opacity="0.95"/><rect x="282.4" y="224.0" width="38.4" height="4" rx="2" fill="#5aa0f0"/><rect x="324.8" y="196.0" width="38.4" height="26" rx="3" fill="#0c2412" stroke="#38ff7a" stroke-width="1" opacity="0.95"/><rect x="324.8" y="224.0" width="38.4" height="4" rx="2" fill="#5aa0f0"/><rect x="367.2" y="196.0" width="38.4" height="26" rx="3" fill="#0c2412" stroke="#38ff7a" stroke-width="1" opacity="0.95"/><rect x="367.2" y="224.0" width="38.4" height="4" rx="2" fill="#5aa0f0"/><rect x="409.6" y="196.0" width="38.4" height="26" rx="3" fill="#0c2412" stroke="#38ff7a" stroke-width="1" opacity="0.95"/><rect x="409.6" y="224.0" width="38.4" height="4" rx="2" fill="#5aa0f0"/>
+  <text x="28" y="258" font-family="sans-serif" font-size="11" fill="#6f7889">
+    VANTA 概念組 ・ 2026 EP01 ・ 12700 VP
+  </text>
+</svg>

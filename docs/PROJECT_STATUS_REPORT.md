@@ -198,3 +198,43 @@ python -m tools.godot.serve --ai
 ---
 
 **報告完成** ✅
+
+---
+
+## 2026-09-15 增量：視覺品質（槍皮 / 特效 / 手感）
+
+| 項目 | 數量 | 來源 |
+|---|---|---|
+| 武器造型 | 140（14 系列，含 Chroma 變色、Radianite 升級、磨損） | `tools/skins/catalog.py` |
+| 可平鋪圖案 | 14（carbon/cracks/hex/scales/nebula/…） | `tools/skins/patterns.py` |
+| 貼圖規格 | `TEX` v2（發光只沿結構脊線） | `tools/skins/emit.py` ⇄ `client/scripts/procedural_texture.gd` |
+| 特效藍圖 | 58（圖層型別 7 種、掛點 10 種） | `tools/vfx/blueprints.py` |
+| 粒子預設／精靈／貼花 | 94 / 18 / 14 | `tools/vfx/{particles,sprites,decals}.py` |
+| 匯出素材 | 131 → `client/assets/`（`asset_index.json` + `.export_manifest.json`） | `tools/godot/export.py` |
+| 新 UI | Armory 兵工廠（3D 預覽、試射、檢視動畫、購買/升級） | `client/scripts/armory.gd` |
+
+**驗證**：`python3 -m pytest -q tests/ workers/tests/` → 僅剩 11 failed / 1 error，
+全部為環境因素（沙箱無 UDP bind、無 Rust 執行檔、無 node），與 2026-08 基準一致；
+新增 `tests/test_tools_skins.py`（78 項）與 `tests/test_tools_vfx_fx.py` vfx2 段落全綠。
+客戶端腳本以 `gdparse` 逐檔驗證（本環境無 Godot 執行期），`client/tests/test_all.gd`
+Suite2 清單已納入 10 支新腳本。
+
+**協定影響**：無。`server/netcode/protocol.py` 與 `client/scripts/net_client.gd` 未改，
+位元級 parity 測試維持綠燈；造型為純客戶端本機狀態（`user://skin_progression.json`）。
+
+### 2026-09-16 重組：以 `master` 為基底
+
+視覺系統那顆 commit 已 rebase 到更新後的 `master`（`5540db4`）之上，並把素材策略改成
+「**只覆蓋、不刪除**」：
+
+| 項目 | 結果 |
+|---|---|
+| 相對 `master` 的差異 | 54 新增 / 61 修改 / **0 刪除** |
+| `server/game/{modes,shop,party,history,missions,replay,practice,highlights}.py` | 完好（先前 diff 顯示的「刪除」是兩點比較造成的分叉假象） |
+| `client/scripts/{observer,mission_ui,replay_viewer,practice_ui}.gd`、`client/assets/maps/bind.json` | 完好 |
+| `tests/test_fun_*.py`（6 支） | 全綠 |
+| 協定 | `protocol.py` ⇄ `net_client.gd` 未改；`test_parity.py`／`test_godot_protocol_parity.py` 綠（2 項跳過＝沙箱無 cargo） |
+| 視覺／素材測試 | `test_tools_skins.py`(78) + `test_tools_vfx_fx.py`(vfx2 段) + `test_godot_export.py` 全綠 |
+| 全量 `pytest tests/ workers/tests/` | 僅 11 failed + 1 error，全部為沙箱環境因素（UDP bind／Rust 執行檔／node），與基準相同 |
+| GDScript | `client/scripts/*.gd` + `client/tests/*.gd` 共 48 支 `gdparse` 零錯誤 |
+| 唯一衝突 | `client/scripts/main.gd` 的 `_consume_events()`：同時保留皮膚擊殺藍圖與 master 新增的 `EV_ASSIST/EV_STREAK/EV_CLUTCH/EV_ORB` 事件 |

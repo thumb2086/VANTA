@@ -1,0 +1,134 @@
+{
+  "sprites": [
+    {
+      "name": "pixel",
+      "shape": "pixel",
+      "color": "#ffffff",
+      "blocks": 5,
+      "gap": 0.15
+    },
+    {
+      "name": "sprite_crystal",
+      "shape": "crystal",
+      "color": "#dff4ff",
+      "facets": 6,
+      "sharpness": 0.7
+    },
+    {
+      "name": "sprite_dust",
+      "shape": "dust",
+      "color": "#c9c3b4",
+      "puffs": 9,
+      "softness": 0.85
+    },
+    {
+      "name": "sprite_feather",
+      "shape": "feather",
+      "color": "#ffffff",
+      "barbs": 7,
+      "ratio": 0.32
+    },
+    {
+      "name": "sprite_flame",
+      "shape": "flame",
+      "color": "#ffd08a",
+      "flicker": 0.4,
+      "taper": 0.55
+    },
+    {
+      "name": "sprite_flare",
+      "shape": "star",
+      "color": "#fff3c8",
+      "points": 6,
+      "inner": 0.24,
+      "softness": 0.5,
+      "spikes": 1.0
+    },
+    {
+      "name": "sprite_glob",
+      "shape": "glob",
+      "color": "#ffffff",
+      "softness": 0.3,
+      "drip": 0.35
+    },
+    {
+      "name": "sprite_glow",
+      "shape": "glow",
+      "color": "#ffffff",
+      "softness": 0.55,
+      "core": 0.18
+    },
+    {
+      "name": "sprite_petal",
+      "shape": "petal",
+      "color": "#ffd8e2",
+      "curl": 0.35,
+      "ratio": 0.55
+    },
+    {
+      "name": "sprite_ring",
+      "shape": "ring",
+      "color": "#ffffff",
+      "thickness": 0.14,
+      "softness": 0.3
+    },
+    {
+      "name": "sprite_shard",
+      "shape": "shard",
+      "color": "#e8f0ff",
+      "edges": 5,
+      "sharpness": 0.55
+    },
+    {
+      "name": "sprite_smoke",
+      "shape": "smoke",
+      "color": "#b9bcc4",
+      "puffs": 6,
+      "softness": 0.75
+    },
+    {
+      "name": "sprite_soul",
+      "shape": "wisp",
+      "color": "#d9a8ff",
+      "curl": 0.55,
+      "tail": 0.7
+    },
+    {
+      "name": "sprite_spark",
+      "shape": "spark",
+      "color": "#fff0b0",
+      "arms": 4,
+      "thickness": 0.16
+    },
+    {
+      "name": "sprite_star4",
+      "shape": "star",
+      "color": "#ffffff",
+      "points": 4,
+      "inner": 0.2,
+      "softness": 0.45
+    },
+    {
+      "name": "sprite_tracer",
+      "shape": "glow",
+      "color": "#fff0c0",
+      "softness": 0.28,
+      "elongate": 6.0
+    },
+    {
+      "name": "sprite_tracer_light",
+      "shape": "glow",
+      "color": "#ffffff",
+      "softness": 0.15,
+      "elongate": 9.0
+    },
+    {
+      "name": "sprite_tracer_wisp",
+      "shape": "wisp",
+      "color": "#c690ff",
+      "curl": 0.3,
+      "tail": 0.95,
+      "elongate": 5.0
+    }
+  ]
+}

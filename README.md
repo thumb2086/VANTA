@@ -62,6 +62,20 @@ python3 scripts/profile_server.py 20 # 伺服器熱路徑剖析
 
 Python 3.11+，零第三方依賴（測試用 pytest）。
 
+## 武器造型 / 特效（槍皮系統）
+
+140 支造型、14 個系列、Chroma 變色、Radianite 升級、兵工廠預覽與試射——全部
+**由工具鏈產生、由測試守護**，仓库裡沒有一張人工貼圖：
+
+```bash
+python3 -m tools.cli skins            # 槍皮目錄 + 系列卡 → tools/assets/
+python3 -m tools.cli vfx2             # 分層特效藍圖 / 精靈 / 貼花
+python3 -m tools.godot.export         # 匯入 client/assets/（全部素材（目前 131 個））
+python3 -m pytest -q tests/test_tools_skins.py   # 78 項（含跨語言契約）
+```
+
+主選單 `🛡` 進兵工廠（`Esc` 返回）。完整設計與取捨見 `docs/09_visual_polish.md`。
+
 ## Cloudflare Workers 部署（後端線上版）
 
 遊戲後端已移植到 Cloudflare Workers（`workers/`）：WebSocket + Durable Object，
@@ -91,11 +105,13 @@ server/
   core/          # 引擎無關純邏輯（Vec3、移動、移動準度懲罰）
   netcode/       # 128Hz 迴圈、二進位協定、傳輸、伺服器/客戶端迴圈
   game/          # 武器、後座力、彈道、經濟、回合、Spike、技能、地圖、實體
-tools/           # 可程式化素材工具鏈（音效/武器模組/地圖/VFX/擊殺特效/CLI）
+tools/           # 可程式化素材工具鏈（音效/武器模組/地圖/VFX/擊殺特效/槍皮目錄/CLI）
+  skins/         #   槍皮：14 種可平鋪圖案 → 14 系列 140 造型 → 即時程序貼圖規格
+  vfx/           #   特效：58 張分層藍圖 + 94 粒子預設 + 精靈/貼花
   assets/        # 工具鏈產出的素材（WAV/SVG/JSON + manifest）
 client/          # Godot 4 客戶端（渲染層）：UDP 連線、預測、HUD、音效/VFX
 tests/           # 每模組對應測試 + 端到端整合測試
-docs/            # 研究筆記、技術選型、任務清單、工具鏈、Godot 客戶端
+docs/            # 研究筆記、技術選型、任務清單、工具鏈、Godot 客戶端、視覺品質（09）
 ```
 
 ## 核心架構（防作弊 = 伺服器權威）
@@ -110,6 +126,7 @@ docs/            # 研究筆記、技術選型、任務清單、工具鏈、Godo
 
 - 機制數值為社群量測近似（Riot 未公開），全部集中在資料表，可後續校正。
 - 純 Python 原型約 31x 即時（10 玩家含完整對戰與 AI）；正式版熱路徑移植 Rust。
-- 渲染層（Godot 4.4+）尚未實作——所有機制以確定性模擬 + 測試驗證。
+- 渲染層為 Godot 4.4（GL Compatibility）程序化實作：無外部模型/貼圖資產，槍皮與特效
+  全部由工具鏈規格在執行期生成（見 `docs/09_visual_polish.md`）。
 - 移動碰撞目前為「位置修正」（圓柱 vs AABB 推離 + 玩家間推離）；
   階梯攀爬 / 斜坡 / 複雜 BSP 碰撞為後續工作。

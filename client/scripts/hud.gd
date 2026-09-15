@@ -90,9 +90,14 @@ var _banner_text := ""
 var _banner_hs := false
 var _banner_weapon := ""
 var _banner_timer := 0.0
+var _banner_color := Color(1.0, 0.32, 0.28)
+var _banner_frame := "default"
+var _banner_level := 1
 var _killflash_color := Color(1.0, 0.2, 0.2)
 var _hitmarker_timer := 0.0
 var _hitmarker_headshot := false
+var _hitmarker_color := Color(1.0, 1.0, 1.0)
+var _hitmarker_scale := 1.0
 var _damage_numbers: Array = []
 var _damage_direction_timer := 0.0
 var _damage_direction_angle := 0.0
@@ -157,6 +162,26 @@ func show_kill_banner(victim: String, headshot := false, weapon := "") -> void:
 	_banner_hs = headshot
 	_banner_weapon = weapon
 	_banner_timer = 2.2
+
+
+## 皮膚感知的命中回饋（FxManager 由 blueprint 的 hud 層呼叫）
+func hit_marker(color := Color(1.0, 1.0, 1.0), headshot := false, scale := 1.0) -> void:
+	_hitmarker_timer = 0.25
+	_hitmarker_headshot = headshot
+	_hitmarker_color = color
+	_hitmarker_scale = scale
+
+
+## 傳說級擊殺橫幅：底色／框／等級都由皮膚決定
+func show_kill_banner_fx(victim: String, skin_name := "", color := Color(1.0, 0.32, 0.28),
+		frame := "default", level := 1) -> void:
+	_banner_text = victim
+	_banner_hs = false
+	_banner_timer = 2.2
+	_banner_weapon = skin_name
+	_banner_color = color
+	_banner_frame = frame
+	_banner_level = clampi(level, 1, 5)
 
 
 func show_hitmarker(headshot := false) -> void:
@@ -264,32 +289,42 @@ func _draw_kill_banner(vp: Vector2, font: Font) -> void:
 	if _banner_timer <= 0.0 or _banner_text == "":
 		return
 	var u := _banner_timer / 2.2                       # 1 → 0
-	var alpha: float = clampf(u * 2.5, 0.0, 1.0)       # 前 0.66s 淡入後常駐，尾段淡出
-	alpha = clampf((1.0 - u) * 8.0, 0.0, 1.0) * clampf(u * 4.0, 0.0, 1.0)
+	var alpha: float = clampf((1.0 - u) * 8.0, 0.0, 1.0) * clampf(u * 4.0, 0.0, 1.0)
 	var cy := vp.y * 0.80
-	var pop := 1.0 + (1.0 - clampf((1.0 - u) * 6.0, 0.0, 1.0)) * 0.12   # 出現瞬間微放大
+	var pop := 1.0 + (1.0 - clampf((1.0 - u) * 6.0, 0.0, 1.0)) * 0.12
 	var fs := int(30.0 * (vp.y / 720.0) * pop)
 	var main := "你擊殺了  " + _banner_text
-	var col := Color(1.0, 0.32, 0.28, alpha)
+	var col := _banner_color if _banner_frame != "default" else Color(1.0, 0.32, 0.28)
+	col = Color(col.r, col.g, col.b, alpha)
 	var w := font.get_string_size(main, HORIZONTAL_ALIGNMENT_CENTER, -1, fs).x
 	var cx := vp.x * 0.5 - w * 0.5
-	# 底部襯條
-	draw_rect(Rect2(cx - 18, cy - fs - 8, w + 36, fs + 20),
-		Color(0.05, 0.05, 0.07, alpha * 0.55))
+	# 底部襯條（傳說皮加高、加系列色描邊）
+	var pad := 18.0 + (6.0 if _banner_frame != "default" else 0.0)
+	var box := Rect2(cx - pad, cy - fs - 8, w + pad * 2.0, fs + 20 + (10.0 if _banner_level >= 4 else 0.0))
+	draw_rect(box, Color(0.05, 0.05, 0.07, alpha * (0.55 if _banner_frame == "default" else 0.75)))
+	if _banner_frame != "default":
+		var top := Vector2(box.position.x, box.position.y)
+		draw_line(top, Vector2(box.end.x, top.y), Color(col.r, col.g, col.b, alpha * 0.85), 2.0)
+		draw_line(Vector2(box.position.x, box.end.y), Vector2(box.end.x, box.end.y),
+			Color(col.r, col.g, col.b, alpha * 0.45), 1.5)
+		# 等級點（Radianite 升級可見化）
+		for i in _banner_level:
+			var px := box.position.x + 10 + i * 9.0
+			draw_rect(Rect2(px, box.position.y - 5, 6, 3),
+				Color(col.r, col.g, col.b, alpha * 0.9))
 	draw_string(font, Vector2(cx, cy), main, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, col)
 	if _banner_weapon != "":
 		var ws := int(fs * 0.45)
 		var wt := _banner_weapon
 		var ww := font.get_string_size(wt, HORIZONTAL_ALIGNMENT_LEFT, -1, ws).x
 		draw_string(font, Vector2(vp.x * 0.5 - ww * 0.5, cy + ws * 1.3), wt,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, ws, Color(0.85, 0.85, 0.9, alpha * 0.8))
+			HORIZONTAL_ALIGNMENT_LEFT, -1, ws, Color(col.r, col.g, col.b, alpha * 0.95))
 	if _banner_hs:
 		var hs_fs := int(fs * 0.5)
 		var ht := "[爆頭]"
 		var hw := font.get_string_size(ht, HORIZONTAL_ALIGNMENT_LEFT, -1, hs_fs).x
 		draw_string(font, Vector2(cx + w + 10, cy), ht,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, hs_fs, Color(1.0, 0.8, 0.2, alpha))
-
 
 
 func _draw_scope_overlay(vp: Vector2, font: Font) -> void:
@@ -730,9 +765,10 @@ func _draw_hitmarker(vp: Vector2, font: Font) -> void:
 	var cx := vp.x * 0.5
 	var cy := vp.y * 0.5
 	var alpha := _hitmarker_timer / 0.25
-	var len := 4.0
-	var gap := 6.0
-	var col := Color(1.0, 1.0, 1.0, alpha)
+	var len := 4.0 * maxf(0.6, _hitmarker_scale)
+	var gap := 6.0 * maxf(0.6, _hitmarker_scale)
+	var col := Color(_hitmarker_color.r, _hitmarker_color.g, _hitmarker_color.b, alpha)
+	var sc := maxf(0.6, _hitmarker_scale)
 	if _hitmarker_headshot:
 		col = Color(1.0, 0.2, 0.2, alpha)
 		draw_line(Vector2(cx - gap - len - 1, cy - gap - len - 1), Vector2(cx - gap + 1, cy - gap + 1), Color(1, 1, 1, alpha * 0.6), 3.0)

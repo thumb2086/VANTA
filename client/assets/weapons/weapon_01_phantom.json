@@ -18,7 +18,7 @@
     "damage": 39.0,
     "falloff": {
       "range_min": 15,
-      "range_max": 30,
+      "range_max": 50,
       "dmg_max": 39,
       "dmg_min": 31
     },
