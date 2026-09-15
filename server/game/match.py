@@ -126,6 +126,8 @@ class Match:
         if self.mode == "teamdeathmatch":
             self.phase = RoundPhase.ACTION
             self.phase_timer = TDM_TIME_LIMIT
+            for p in self.world.players:
+                p.grant_weapon("classic")
 
     # ------------------------------------------------------------------ #
     def _buy_time_for_round(self, round_number: int) -> float:

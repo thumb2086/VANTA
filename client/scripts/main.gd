@@ -523,7 +523,7 @@ func _consume_events() -> void:
 			NetClient.EV_MATCH_END:
 				hud.announce("比賽結束", Color(1.0, 0.85, 0.3))
 				audio_mgr.play_event(NetClient.EV_MATCH_END)
-				# 賽後結算頁面
+				# 賽後結算畫面
 				var won := net.match_score_a > net.match_score_b if net.slot < 5 else net.match_score_b > net.match_score_a
 				if _match_results and _match_results.visible == false:
 					var round_records: Array = []
@@ -531,6 +531,27 @@ func _consume_events() -> void:
 						round_records = net.get_round_records()
 					_match_results.show_results(won, net.match_score_a, net.match_score_b,
 						round_records, net.players, net.slot, 0 if net.slot < 5 else 1)
+			NetClient.EV_ASSIST:
+				var assister := int(ev["p0"]); var victim2 := int(ev["p1"])
+				if assister == net.slot:
+					hud.announce("助攻 +1", Color(0.5, 0.8, 1.0))
+					hud.push_feed("助攻 P%02d" % victim2)
+					audio_mgr.play_hitmarker()
+			NetClient.EV_STREAK:
+				var streak := int(ev["p0"]); var killer2 := int(ev["p1"])
+				var names := {2:"DOUBLE KILL",3:"TRIPLE KILL",4:"QUAD KILL",5:"ACE"}
+				var nm: String = names.get(streak, "%d KILL" % streak)
+				hud.announce(nm, Color(1.0, 0.75, 0.1) if streak >=4 else Color(1.0, 0.85, 0.3))
+				if killer2 == net.slot: audio_mgr.play_kill()
+			NetClient.EV_CLUTCH:
+				var wh := int(ev["p0"]); var vs := int(ev["p1"])
+				hud.announce("殘局 1v%d" % vs, Color(1.0, 0.4, 0.2))
+				hud.push_feed("殘局 P%02d 1v%d" % [wh, vs])
+			NetClient.EV_ORB:
+				var kind_i := int(ev["p0"]); var who := int(ev["p1"])
+				var kind_names := ["武器升級","全隊治療","刺激","偏執","金槍"]
+				var kn: String = kind_names[kind_i] if kind_i < kind_names.size() else str(kind_i)
+				if who == net.slot: hud.announce("能量球：%s" % kn, Color(0.4, 0.9, 0.6))
 	net.events.clear()
 
 

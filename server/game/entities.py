@@ -812,6 +812,15 @@ class World:
                 self.match.dm_kill_counts[killer_slot] += 1
             if self.match.mode == "teamdeathmatch" and 0 <= killer_slot < len(self.players):
                 self.match.tdm_team_kills[self.players[killer_slot].team] += 1
+                try:
+                    from server.game.modes import tdm_next_weapon
+                    k = self.players[killer_slot]
+                    nk = tdm_next_weapon(k.kills)
+                    if nk != k.inventory.active_state().stats.key:
+                        k.grant_weapon(nk)
+                        self.event_log.append(f"tdm_upgrade: slot{killer_slot} -> {nk} ({k.kills} kills)")
+                except Exception:
+                    pass
             if 0 <= victim_slot < len(self.match.dm_respawn_timers):
                 self.match.dm_respawn_timers[victim_slot] = 2.0 if self.match.mode == "teamdeathmatch" else 3.0
 

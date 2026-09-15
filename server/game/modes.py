@@ -209,6 +209,13 @@ MODE_RULES: dict[str, ModeRules] = {
 }
 
 
+TDM_LADDER = ("classic","ghost","stinger","spectre","bulldog","phantom","vandal","operator","odin")
+TDM_KILLS_PER_TIER = 3
+
+def tdm_next_weapon(kills: int) -> str:
+    idx = min(kills // TDM_KILLS_PER_TIER, len(TDM_LADDER)-1)
+    return TDM_LADDER[idx]
+
 MODE_ALIASES = {
     "unrated": COMPETITIVE, "spike_rush": SPIKERUSH,
     "dm": DEATHMATCH, "tdm": "teamdeathmatch",

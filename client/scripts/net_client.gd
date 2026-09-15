@@ -39,6 +39,10 @@ const EV_SPIKE_DETONATED := 4
 const EV_ROUND_WIN := 5
 const EV_ROUND_LOSS := 6
 const EV_MATCH_END := 7
+const EV_ASSIST := 8
+const EV_STREAK := 9      # p0=streak(2/3/4/5), p1=killer slot
+const EV_CLUTCH := 10     # p0=clutcher, p1=vs count
+const EV_ORB := 11        # p0=kind idx, p1=capturer slot
 
 const ACTION_SHOOT := 0x01
 const ACTION_RELOAD := 0x02
