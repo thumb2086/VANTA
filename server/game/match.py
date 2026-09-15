@@ -15,6 +15,10 @@ from enum import Enum
 
 from server.core.math_core import Vec3
 from server.game.economy import ROUND_WIN_REWARD, loss_bonus
+from server.game.modes import (
+    COMPETITIVE, DEATHMATCH, SPIKERUSH, SWIFTPLAY,
+    mode_rules, sp_round_grant, sr_round_weapon, sr_round_shield, OrbField,
+)
 
 
 @dataclass
@@ -91,25 +95,63 @@ class RoundRecord:
 class Match:
     def __init__(self, world, config=None, mode: str = "competitive"):
         self.world = world
-        self.mode = mode  # competitive / deathmatch
+        self.mode = mode  # competitive / deathmatch / spikerush / swiftplay
+        self.rules = mode_rules(mode) if mode != "deathmatch" else None
         self.phase = RoundPhase.BUY
         self.round = 1
         self.scores = {0: 0, 1: 0}
         self.loss_streak = {0: 0, 1: 0}
-        self.phase_timer = BUY_TIME_FIRST
+        self.phase_timer = self._buy_time_for_round(1)
         self.round_records: list[RoundRecord] = []
         self.round_winner: int | None = None
         self.round_reason = ""
         self.event_log: list[str] = []
+        # Spike Rush 專用：orb 場地＋本回合配裝
+        self.orb_field = OrbField()
+        self.sr_loadout = ""
+        # Swiftplay 專用：上一回合勝隊（經濟配給用）
+        self._sp_prev_winner: int | None = None
         # 死鬥模式
         self.dm_kill_counts: list[int] = [0] * 10  # 每人擊殺數
         self.dm_timer = DM_TIME_LIMIT
         self.dm_respawn_timers: list[float] = [0.0] * 10  # 復活倒數
+        if self.mode == SPIKERUSH:
+            self._sr_setup_round()
+
+    # ------------------------------------------------------------------ #
+    def _buy_time_for_round(self, round_number: int) -> float:
+        if self.mode == "deathmatch" or self.rules is None:
+            return BUY_TIME_FIRST
+        if round_number == 1 or (self.rules.half_rounds and round_number == self.rules.half_rounds + 1):
+            return self.rules.buy_time_first
+        return self.rules.buy_time_normal
+
+    def _round_in_half(self) -> int:
+        """半場內第幾回合（1-based）。"""
+        if self.rules is None or not self.rules.half_rounds:
+            return self.round
+        return (self.round - 1) % self.rules.half_rounds + 1
+
+    def _sr_setup_round(self) -> None:
+        """Spike Rush 回合開始：全場配裝＋護甲＋技能補滿＋orbs。"""
+        rih = self._round_in_half()
+        self.sr_loadout = sr_round_weapon(self.world.rng, rih)
+        shield = sr_round_shield(rih)
+        for p in self.world.players:
+            p.grant_weapon(self.sr_loadout)
+            p.grant_shield(float(shield))
+            p.abilities.refill()
+            p.new_round()
+        self.orb_field.spawn_for_round(self.world.rng, self.world.map_data, self.round)
+        self.event_log.append(f"sr: round{self.round} loadout={self.sr_loadout} shield={shield} orbs={len(self.orb_field.orbs)}")
 
     # ------------------------------------------------------------------ #
     def attackers(self, round_number: int | None = None) -> int:
         r = self.round if round_number is None else round_number
-        return TEAM_ATTACKERS if (r - 1) % (ROUNDS_PER_HALF * 2) < ROUNDS_PER_HALF else TEAM_DEFENDERS
+        half = self.rules.half_rounds if self.rules is not None else ROUNDS_PER_HALF
+        if not half:
+            return TEAM_ATTACKERS
+        return TEAM_ATTACKERS if (r - 1) % (half * 2) < half else TEAM_DEFENDERS
 
     def defenders(self) -> int:
         return 1 - self.attackers()
@@ -131,6 +173,10 @@ class Match:
                 self._start_action()
         elif self.phase == RoundPhase.ACTION:
             self._check_round_end()
+            if self.mode == SPIKERUSH:
+                for ev in self.orb_field.update(self.world):
+                    self.world.event_log.append(ev)
+                    self.event_log.append(ev)
         elif self.phase == RoundPhase.END:
             if self.phase_timer <= 0.0:
                 self._settle_and_next_round()
@@ -175,7 +221,7 @@ class Match:
     # ------------------------------------------------------------------ #
     def _start_action(self) -> None:
         self.phase = RoundPhase.ACTION
-        self.phase_timer = ACTION_TIME
+        self.phase_timer = self.rules.action_time if self.rules is not None else ACTION_TIME
         self.event_log.append(f"round{self.round} action start (attackers=team{self.attackers()})")
 
     def _check_round_end(self) -> None:
@@ -216,18 +262,35 @@ class Match:
         self.event_log.append(f"round{self.round} -> team{winner} wins ({reason})")
 
     def _settle_and_next_round(self) -> None:
-        # 經濟結算：勝隊 +3000，敗隊連敗補償（含最終回合）
-        for i, p in enumerate(self.world.players):
-            team = p.team
-            if team == self.round_winner:
-                p.economy.grant(ROUND_WIN_REWARD)
-            else:
-                p.economy.grant(loss_bonus(self.loss_streak[team]))
-        # 獲勝判定：正規先到 13 分；12-12 時進入延長賽，先到 14 分勝
-        win_threshold = ROUNDS_OVERTIME if (self.scores[0] == 12 and self.scores[1] == 12) else ROUNDS_TO_WIN
+        # 經濟結算（依模式）
+        if self.mode == SWIFTPLAY:
+            # 固定配給：依半場內回合數＋上回合是否獲勝
+            rih_next = self._round_in_half() + 1
+            for p in self.world.players:
+                won_prev = (p.team == self.round_winner)
+                p.economy.credits = min(9000, sp_round_grant(rih_next, won_prev))
+            self._sp_prev_winner = self.round_winner
+        elif self.mode == SPIKERUSH:
+            pass  # 配裝制：無經濟
+        else:
+            # 標準：勝隊 +3000，敗隊連敗補償（含最終回合）
+            for i, p in enumerate(self.world.players):
+                team = p.team
+                if team == self.round_winner:
+                    p.economy.grant(ROUND_WIN_REWARD)
+                else:
+                    p.economy.grant(loss_bonus(self.loss_streak[team]))
+        # 獲勝判定
+        if self.rules is not None:
+            win_threshold = self.rules.rounds_to_win
+            ot_tag = ""
+            if self.mode == COMPETITIVE and self.scores[0] == 12 and self.scores[1] == 12:
+                win_threshold = ROUNDS_OVERTIME
+                ot_tag = " (OT)"
+        else:
+            win_threshold, ot_tag = ROUNDS_TO_WIN, ""
         if self.scores[self.round_winner] >= win_threshold:
             self.phase = RoundPhase.FINISHED
-            ot_tag = " (OT)" if win_threshold == ROUNDS_OVERTIME else ""
             self.event_log.append(
                 f"MATCH END{ot_tag}: team{self.round_winner} wins "
                 f"{self.scores[self.round_winner]}-{self.scores[1 - self.round_winner]}"
@@ -237,7 +300,9 @@ class Match:
         self._reset_round_state()
         self.round_winner = None
         self.phase = RoundPhase.BUY
-        self.phase_timer = BUY_TIME_FIRST if self.round in (1, ROUNDS_PER_HALF + 1) else BUY_TIME_NORMAL
+        self.phase_timer = self._buy_time_for_round(self.round)
+        if self.mode == SPIKERUSH:
+            self._sr_setup_round()
 
     def _reset_round_state(self) -> None:
         """回合重置：重生、血量、彈匣；保留武器與護甲；Spike 重置。"""
@@ -253,6 +318,7 @@ class Match:
             p.vel = Vec3()
             p.inventory.reset_all()
             p.status.statuses.clear()
+            p.new_round()
         if self.world.spike is not None:
             self.world.spike.reset()
         self.world.projectiles.clear()

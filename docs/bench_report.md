@@ -1,15 +1,15 @@
 # VANTA 速度驗收報告
 
-**時間**：2026-09-15T00:17:37+0800
+**時間**：2026-09-15T17:28:33+0800
 
 ## 測試結果
 
 | 測試 | 即時倍率 | 耗時 | 每 tick | 記憶體峰值 | 結果 |
 |------|---------|------|---------|-----------|------|
-| Rust Selftest | N/A | 99.3ms | N/A | N/A | ✅ |
-| Rust Tick Speed (76800 ticks) | 6277.5x | 96.0ms | 1.2µs | 0.0MB | ✅ |
+| Rust Selftest | N/A | 104.4ms | N/A | N/A | ✅ |
+| Rust Tick Speed (76800 ticks) | 6376.5x | 94.0ms | 1.2µs | 0.0MB | ✅ |
 | Rust Multi-Client (10 clients, 5.0s) | N/A | 1.97s | N/A | N/A | ✅ |
-| Python Tick Speed (3.0s) | 5.9x | 3.00s | 1320.3µs | 1.1MB | ✅ |
+| Python Tick Speed (3.0s) | 5.8x | 3.00s | 1338.6µs | 1.3MB | ✅ |
 
 ## 詳細
 
@@ -17,13 +17,13 @@
 - 結果：✅ vanta_server selftest 全過（移動/射擊/經濟/Spike/購買/拆除/回合）
 
 ### Rust Tick Speed (76800 ticks)
-- 結果：PASS (目標 ≥500x，實際 6277.5x)
+- 結果：PASS (目標 ≥500x，實際 6376.5x)
 
 ### Rust Multi-Client (10 clients, 5.0s)
 - 結果：RTT avg=0.1ms p50=0.1ms p95=0.1ms p99=0.2ms
 
 ### Python Tick Speed (3.0s)
-- 結果：Python 基線：5.9x 即時
+- 結果：Python 基線：5.8x 即時
 
 ## 驗收標準
 

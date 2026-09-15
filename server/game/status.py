@@ -29,6 +29,7 @@ DECAY = "decay"               # 持續扣血（Viper 毒霧 / Fade 終極）
 SLOW = "slow"                  # 減速：移動速度下降（Sage Slow Orb）
 DEAFENED = "deafened"          # 聽覺封鎖：環境音降低（Breach / Omen）
 REVEALED = "revealed"          # 被偵測：位置被敵方可見（Cypher / Sova）
+DAMAGE_BOOST = "damage_boost"  # 傷害提升：造成的傷害 ×potency（Spike Rush 金槍）
 
 
 @dataclass(slots=True)
@@ -96,6 +97,11 @@ class StatusEffectSystem:
     def damage_taken_mult(self) -> float:
         """易傷 → ×(1+potency)。"""
         return 1.0 + self.potency(VULNERABLE)
+
+    @property
+    def damage_dealt_mult(self) -> float:
+        """傷害提升（金槍）→ ×potency，無則 1.0。"""
+        return self.potency(DAMAGE_BOOST) if self.has(DAMAGE_BOOST) else 1.0
 
     @property
     def can_shoot(self) -> bool:

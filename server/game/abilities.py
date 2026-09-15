@@ -1126,6 +1126,12 @@ class AbilitySystem:
         for s in self.slots:
             s.update(dt)
 
+    def refill(self) -> None:
+        """補滿所有充能並清除冷卻（Spike Rush 每回合免費技能）。"""
+        for s in self.slots:
+            s.charges_left = s.ability.charges
+            s.cooldown_left = 0.0
+
     def snapshot(self) -> list[dict]:
         return [
             {"name": s.ability.name, "charges": s.charges_left, "cooldown": s.cooldown_left}

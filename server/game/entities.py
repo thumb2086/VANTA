@@ -87,6 +87,10 @@ class Player:
         self.abilities = AbilitySystem(list(agent_def[1]))
         self.kills = 0
         self.deaths = 0
+        self.assists = 0
+        self.damage_dealt = 0.0
+        # 本回合傷害歸因：attacker_slot -> 累計傷害（助攻判定用，每回合清空）
+        self.dmg_log: dict[int, float] = {}
 
     # --- 移動代理（M2 相容） ---
     @property
@@ -139,6 +143,19 @@ class Player:
 
     # --- 戰鬥 ---
     def apply_damage(self, amount: float, source_slot: int = -1, weapon_key: str = "") -> DamageReceipt:
+        # 攻擊方傷害加成（金槍等）：透過 world 查來源狀態
+        mult = 1.0
+        if self.world is not None and 0 <= source_slot < len(self.world.players):
+            try:
+                mult = self.world.players[source_slot].status.damage_dealt_mult
+            except Exception:
+                mult = 1.0
+        amount = amount * mult
+        # 傷害歸因（助攻判定用）：記錄攻擊者對本目標的累計傷害
+        if 0 <= source_slot < 10 and source_slot != self.slot:
+            self.dmg_log[source_slot] = self.dmg_log.get(source_slot, 0.0) + amount
+            if self.world is not None and 0 <= source_slot < len(self.world.players):
+                self.world.players[source_slot].damage_dealt += amount
         dmg = amount * self.status.damage_taken_mult
         dealt = 0.0
         if self.shield_hp > 0.0:
@@ -197,6 +214,23 @@ class Player:
             return False
         self.shield_hp = hp
         return True
+
+    def grant_weapon(self, key: str) -> None:
+        """免費配槍（Spike Rush 配裝 / orb 升級）：不扣錢，直接裝主武器槽。"""
+        from server.game.weapon_state import WeaponState
+        stats = weapon(key)
+        ws = WeaponState(stats, self.inventory.active_state().rng)
+        self.inventory.install_primary(ws)
+        self.inventory.active = 0
+        self.inventory.switch_until = -1.0
+
+    def grant_shield(self, hp: float) -> None:
+        """免費護甲（Spike Rush 配裝）。"""
+        self.shield_hp = hp
+
+    def new_round(self) -> None:
+        """回合開始：清空本回合傷害歸因（助攻判定窗口重置）。"""
+        self.dmg_log = {}
 
     def update(self, now: float, dt: float) -> None:
         self.weapon.update(now, dt)
@@ -278,10 +312,10 @@ class World:
         from server.game.spike import SpikeController
 
         self.match = Match(self, mode=mode)
-        if mode == "competitive":
-            self.spike = SpikeController(self, self.map_data)
-        else:
+        if mode == "deathmatch":
             self.spike = None  # 死鬥模式無 Spike
+        else:
+            self.spike = SpikeController(self, self.map_data)
         return self.match
 
     def step(self, inputs: list[MoveInput | None], dt: float) -> None:
@@ -710,6 +744,19 @@ class World:
             k = self.players[killer_slot]
             k.kills += 1
             k.economy.grant(KILL_REWARD)
+            # 助攻：同隊（兇手隊）中對受害者傷害最高、≥25 且非兇手者 +1
+            victim = self.players[victim_slot]
+            best, best_dmg = -1, 25.0
+            for atk, dmg in victim.dmg_log.items():
+                if atk == killer_slot or not (0 <= atk < len(self.players)):
+                    continue
+                if self.players[atk].team != k.team:
+                    continue
+                if dmg > best_dmg:
+                    best, best_dmg = atk, dmg
+            if best >= 0:
+                self.players[best].assists += 1
+                self.event_log.append(f"assist: slot{best} on slot{victim_slot} (killer slot{killer_slot})")
         self.event_log.append(f"kill: slot{victim_slot} by slot{killer_slot} ({weapon_key})")
         # 死鬥模式：記錄擊殺 + 設定復活計時
         if self.match is not None and self.match.mode == "deathmatch":
