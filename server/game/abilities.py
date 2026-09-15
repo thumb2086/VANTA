@@ -1292,11 +1292,11 @@ AGENTS: dict[str, tuple[str, list[IAbility]]] = {
     "brimstone": AGENT_BRIMSTONE,
     "viper": AGENT_VIPER,
     "sage": AGENT_SAGE,
-    # 保留原有通用原型（向後相容）
-    "assault": ("Assault", [FlashAbility(), FragAbility(), SmokeAbility()]),
-    "sentinel": ("Sentinel", [DeployableAbility(), SmokeAbility(), FragAbility()]),
-    "duelist": ("Duelist", [FlashAbility(), FragAbility()]),
-    "controller": ("Controller", [SmokeAbility(), DeployableAbility(), FlashAbility()]),
+    # 通用原型補滿到 4 招（對齊 Valorant C/Q/E/X 標準）
+    "assault": ("Assault", [FlashAbility(), FragAbility(), SmokeAbility(), StimAbility()]),
+    "sentinel": ("Sentinel", [DeployableAbility(), SlowOrbAbility(), FragAbility(), HealingOrbAbility()]),
+    "duelist": ("Duelist", [FlashAbility(), FragAbility(), SmokeAbility(), SprintAbility()]),
+    "controller": ("Controller", [SmokeAbility(), DeployableAbility(), FlashAbility(), SuppressionFieldAbility()]),
 }
 
 GENERATED_AGENTS: dict[str, tuple[str, list[IAbility]]] = {}

@@ -279,6 +279,10 @@ class World:
         self.smokes: list[SmokeCloud] = []
         self.event_log: list[str] = []
         self.spread_engine = SpreadEngine(self.rng)
+        # 好玩系統（highlight/mission/replay）：延遲掛載，不影響熱路徑
+        self._highlights = None  # HighlightTracker
+        self._missions: dict[int, object] = {}  # slot -> MissionTracker
+        self._replay = None  # ReplayRecorder
         # 地圖互動機制狀態
         self._teleport_cooldowns: dict[int, float] = {}  # slot -> 剩餘冷卻
         self._rope_active: dict[int, int] = {}   # slot -> rope index（-1 = 未攀爬）
@@ -312,8 +316,8 @@ class World:
         from server.game.spike import SpikeController
 
         self.match = Match(self, mode=mode)
-        if mode == "deathmatch":
-            self.spike = None  # 死鬥模式無 Spike
+        if mode in ("deathmatch", "teamdeathmatch"):
+            self.spike = None  # 死鬥/團隊死鬥無 Spike
         else:
             self.spike = SpikeController(self, self.map_data)
         return self.match
@@ -372,9 +376,43 @@ class World:
             self.spike.update(dt)
         if self.match is not None:
             self.match.step(dt)
+        # 好玩系統：highlight 播報（非阻塞）
+        try:
+            if self._highlights is None and self.match is not None:
+                from server.game.highlights import HighlightTracker
+
+                self._highlights = HighlightTracker()
+            if self._highlights is not None and self.match is not None:
+                for ann in self._highlights.update(self, self.match):
+                    self.event_log.append(ann)
+        except Exception:
+            pass
+        try:
+            if self._replay is not None:
+                self._replay.record_tick(self.tick, self.time, self)
+                for line in self.event_log[-32:]:
+                    if line.startswith(("kill:", "assist:", "orb:")):
+                        self._replay.record_event(self.tick, line.split(":")[0], {"log": line})
+        except Exception:
+            pass
 
         self.tick += 1
         self.time = self.tick * dt
+
+    def enable_replay(self, match_id: str = "", mode: str = "competitive") -> None:
+        from server.game.replay import ReplayRecorder
+
+        self._replay = ReplayRecorder()
+        self._replay.record_meta(match_id or f"match_{self.tick}", mode)
+
+    def _get_mission(self, slot: int, date_str: str | None = None) -> object:
+        if slot not in self._missions:
+            from server.game.missions import MissionTracker
+            import datetime
+
+            d = date_str or datetime.date.today().isoformat()
+            self._missions[slot] = MissionTracker(d)
+        return self._missions[slot]
 
     def _clamp_buy_zones(self) -> None:
         """買槍階段：玩家限制在出生區內（像《特戰英豪》——可動但不可越界）。
@@ -740,6 +778,7 @@ class World:
 
     # ------------------------------------------------------------------ #
     def _on_player_killed(self, victim_slot: int, killer_slot: int, weapon_key: str) -> None:
+        best = -1
         if 0 <= killer_slot < len(self.players) and killer_slot != victim_slot:
             k = self.players[killer_slot]
             k.kills += 1
@@ -758,12 +797,23 @@ class World:
                 self.players[best].assists += 1
                 self.event_log.append(f"assist: slot{best} on slot{victim_slot} (killer slot{killer_slot})")
         self.event_log.append(f"kill: slot{victim_slot} by slot{killer_slot} ({weapon_key})")
-        # 死鬥模式：記錄擊殺 + 設定復活計時
-        if self.match is not None and self.match.mode == "deathmatch":
+        # 每日任務：kill/assist 累進
+        try:
+            if 0 <= killer_slot < len(self.players):
+                self._get_mission(killer_slot).record("kill")
+                self._get_mission(killer_slot).record("damage", int(self.players[victim_slot].dmg_log.get(killer_slot, 0)))
+            if best >= 0:
+                self._get_mission(best).record("assist")
+        except Exception:
+            pass
+        # 死鬥 / 團隊死鬥：記錄擊殺 + 設定復活計時
+        if self.match is not None and self.match.mode in ("deathmatch", "teamdeathmatch"):
             if 0 <= killer_slot < len(self.match.dm_kill_counts):
                 self.match.dm_kill_counts[killer_slot] += 1
+            if self.match.mode == "teamdeathmatch" and 0 <= killer_slot < len(self.players):
+                self.match.tdm_team_kills[self.players[killer_slot].team] += 1
             if 0 <= victim_slot < len(self.match.dm_respawn_timers):
-                self.match.dm_respawn_timers[victim_slot] = 3.0  # 3 秒後復活
+                self.match.dm_respawn_timers[victim_slot] = 2.0 if self.match.mode == "teamdeathmatch" else 3.0
 
     def los_blocked_by_smoke(self, a: Vec3, b: Vec3) -> bool:
         """a→b 視線是否被任一煙霧球擋住（M11）。"""

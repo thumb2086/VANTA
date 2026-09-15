@@ -26,7 +26,8 @@ COMPETITIVE = "competitive"
 DEATHMATCH = "deathmatch"
 SPIKERUSH = "spikerush"
 SWIFTPLAY = "swiftplay"
-QUICK_MODES = (SPIKERUSH, SWIFTPLAY)
+TEAMDEATHMATCH = "teamdeathmatch"
+QUICK_MODES = (SPIKERUSH, SWIFTPLAY, TEAMDEATHMATCH)
 
 # ---------------------------------------------------------------------- #
 # Spike Rush：回合配裝表（官方規則簡化）
@@ -204,10 +205,17 @@ MODE_RULES: dict[str, ModeRules] = {
                          SR_ACTION_TIME, free_loadout=True),
     SWIFTPLAY: ModeRules(SWIFTPLAY, SP_ROUNDS_TO_WIN, SP_HALF_ROUNDS, SP_BUY_TIME, SP_BUY_TIME,
                          SP_ACTION_TIME, fixed_economy=True),
+    TEAMDEATHMATCH: ModeRules(TEAMDEATHMATCH, 0, 0, 0.0, 0.0, 0.0, has_spike=False),
 }
 
 
+MODE_ALIASES = {
+    "unrated": COMPETITIVE, "spike_rush": SPIKERUSH,
+    "dm": DEATHMATCH, "tdm": "teamdeathmatch",
+}
+
 def mode_rules(mode: str) -> ModeRules:
+    mode = MODE_ALIASES.get(mode, mode)
     if mode not in MODE_RULES:
         raise KeyError(f"unknown mode: {mode}")
     return MODE_RULES[mode]

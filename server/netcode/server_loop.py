@@ -27,13 +27,17 @@ from server.netcode.protocol import (
     ACTION_SHOOT,
     ACTION_SWITCH,
     ACTION_INTERACT,
+    EV_ASSIST,
+    EV_CLUTCH,
     EV_KILL,
     EV_MATCH_END,
+    EV_ORB,
     EV_ROUND_LOSS,
     EV_ROUND_WIN,
     EV_SPIKE_DEFUSED,
     EV_SPIKE_DETONATED,
     EV_SPIKE_PLANTED,
+    EV_STREAK,
     MATCH_STATE_PACKET_SIZE,
     MAX_SLOTS,
     PHASE_ACTION,
@@ -440,9 +444,8 @@ class GameServer:
         if self.transport is None:
             return
         w = self.world
-        # 1) 擊殺（比對 event_log）
+        # 1) 對戰日誌 → GAME_EVENT（kill/assist/streak/clutch/orb）
         for entry in w.event_log[self._prev_log_len :]:
-            # 格式: "kill: slotX by slotY (weapon)"
             if entry.startswith("kill: "):
                 body = entry[len("kill: ") :]
                 victim_s, rest = body.split(" by ", 1)
@@ -453,6 +456,43 @@ class GameServer:
                 except ValueError:
                     continue
                 self._broadcast_event(GameEventPacket(EV_KILL, self.tick, killer, victim))
+            elif entry.startswith("assist: "):
+                try:
+                    # "assist: slotA on slotV (killer slotK)"
+                    a = int(entry.split("slot")[1].split(" ")[0])
+                    v = int(entry.split("on slot")[1].split(" ")[0])
+                    self._broadcast_event(GameEventPacket(EV_ASSIST, self.tick, a, v))
+                except Exception:
+                    continue
+            elif entry.startswith("streak: "):
+                try:
+                    body = entry[len("streak: ") :]
+                    k = int(body.split("slot")[1].split(" ")[0])
+                    name = body.split(" ", 2)[-1]
+                    streak = {"DOUBLE KILL": 2, "TRIPLE KILL": 3, "QUAD KILL": 4, "ACE": 5}.get(name, 0)
+                    if streak:
+                        self._broadcast_event(GameEventPacket(EV_STREAK, self.tick, streak, k))
+                except Exception:
+                    continue
+            elif entry.startswith("clutch: "):
+                try:
+                    body = entry[len("clutch: ") :]
+                    c = int(body.split("slot")[1].split(" ")[0])
+                    vs = int(body.split("1v")[1].split(" ")[0])
+                    self._broadcast_event(GameEventPacket(EV_CLUTCH, self.tick, c, vs))
+                except Exception:
+                    continue
+            elif entry.startswith("orb: "):
+                try:
+                    o = int(entry.split("slot")[1].split(" ")[0])
+                    kind_idx = 0
+                    for i, k in enumerate(("weapon_upgrade", "heal_team", "stim_team", "paranoia", "golden_gun")):
+                        if k in entry:
+                            kind_idx = i
+                            break
+                    self._broadcast_event(GameEventPacket(EV_ORB, self.tick, kind_idx, o))
+                except Exception:
+                    continue
         self._prev_log_len = len(w.event_log)
 
         # 2) Spike 狀態轉移

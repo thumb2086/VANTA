@@ -61,6 +61,10 @@ EV_SPIKE_DETONATED = 4
 EV_ROUND_WIN = 5
 EV_ROUND_LOSS = 6
 EV_MATCH_END = 7
+EV_ASSIST = 8
+EV_STREAK = 9      # p0=streak(2/3/4/5), p1=killer slot
+EV_CLUTCH = 10     # p0=clutcher slot, p1=vs count
+EV_ORB = 11        # p0=orb kind index, p1=capturer slot
 
 MAX_SLOTS = 10
 

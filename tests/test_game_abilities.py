@@ -162,6 +162,6 @@ def test_agent_kits_exist():
 def test_agent_assignment():
     world = World()
     assert world.players[0].agent_key == "assault"
-    assert len(world.players[0].abilities.slots) == 3   # flash/frag/smoke
+    assert len(world.players[0].abilities.slots) == 4   # flash/frag/smoke/stim (補滿到 4)
     world.players[0].abilities.slots[0].charges_left = 1
     assert world.players[0].abilities.slots[0].charges_left == 1

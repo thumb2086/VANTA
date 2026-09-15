@@ -92,11 +92,16 @@ class RoundRecord:
     reason: str
 
 
+TDM_KILLS_TO_WIN = 100
+TDM_TIME_LIMIT = 300.0
+TDM_RESPAWN = 2.0
+
+
 class Match:
     def __init__(self, world, config=None, mode: str = "competitive"):
         self.world = world
-        self.mode = mode  # competitive / deathmatch / spikerush / swiftplay
-        self.rules = mode_rules(mode) if mode != "deathmatch" else None
+        self.mode = mode  # competitive / deathmatch / spikerush / swiftplay / teamdeathmatch
+        self.rules = mode_rules(mode) if mode not in ("deathmatch", "teamdeathmatch") else None
         self.phase = RoundPhase.BUY
         self.round = 1
         self.scores = {0: 0, 1: 0}
@@ -111,16 +116,20 @@ class Match:
         self.sr_loadout = ""
         # Swiftplay 專用：上一回合勝隊（經濟配給用）
         self._sp_prev_winner: int | None = None
-        # 死鬥模式
+        # 死鬥 / 團隊死鬥
         self.dm_kill_counts: list[int] = [0] * 10  # 每人擊殺數
-        self.dm_timer = DM_TIME_LIMIT
-        self.dm_respawn_timers: list[float] = [0.0] * 10  # 復活倒數
+        self.tdm_team_kills = [0, 0]
+        self.dm_timer = DM_TIME_LIMIT if mode == DEATHMATCH else TDM_TIME_LIMIT
+        self.dm_respawn_timers: list[float] = [0.0] * 10
         if self.mode == SPIKERUSH:
             self._sr_setup_round()
+        if self.mode == "teamdeathmatch":
+            self.phase = RoundPhase.ACTION
+            self.phase_timer = TDM_TIME_LIMIT
 
     # ------------------------------------------------------------------ #
     def _buy_time_for_round(self, round_number: int) -> float:
-        if self.mode == "deathmatch" or self.rules is None:
+        if self.mode in ("deathmatch", "teamdeathmatch") or self.rules is None:
             return BUY_TIME_FIRST
         if round_number == 1 or (self.rules.half_rounds and round_number == self.rules.half_rounds + 1):
             return self.rules.buy_time_first
@@ -164,7 +173,7 @@ class Match:
     def step(self, dt: float) -> None:
         if self.phase == RoundPhase.FINISHED:
             return
-        if self.mode == "deathmatch":
+        if self.mode in ("deathmatch", "teamdeathmatch"):
             self._step_deathmatch(dt)
             return
         self.phase_timer -= dt
@@ -182,15 +191,26 @@ class Match:
                 self._settle_and_next_round()
 
     def _step_deathmatch(self, dt: float) -> None:
-        """死鬥模式：無回合，擊殺得分，20 殺或 10 分鐘結束。"""
+        """死鬥/團隊死鬥：擊殺得分，團隊死鬥 100 殺或 300s、死鬥 40 殺或 540s。"""
         self.dm_timer -= dt
-        # 復活計時
         for i in range(len(self.dm_respawn_timers)):
             if self.dm_respawn_timers[i] > 0:
                 self.dm_respawn_timers[i] -= dt
                 if self.dm_respawn_timers[i] <= 0:
                     self._respawn_player(i)
-        # 檢查勝利條件
+        if self.mode == "teamdeathmatch":
+            for team in (0, 1):
+                if self.tdm_team_kills[team] >= TDM_KILLS_TO_WIN:
+                    self.phase = RoundPhase.FINISHED
+                    self.round_reason = f"team{team} reached {TDM_KILLS_TO_WIN} kills"
+                    self.event_log.append(self.round_reason)
+                    return
+            if self.dm_timer <= 0:
+                winner = 0 if self.tdm_team_kills[0] >= self.tdm_team_kills[1] else 1
+                self.phase = RoundPhase.FINISHED
+                self.round_reason = f"time up, team{winner} wins {self.tdm_team_kills[winner]}-{self.tdm_team_kills[1-winner]}"
+                self.event_log.append(self.round_reason)
+            return
         for i, kills in enumerate(self.dm_kill_counts):
             if kills >= DM_KILLS_TO_WIN:
                 self.phase = RoundPhase.FINISHED
@@ -198,7 +218,6 @@ class Match:
                 self.event_log.append(self.round_reason)
                 return
         if self.dm_timer <= 0:
-            # 時間到，最高分者勝
             winner = self.dm_kill_counts.index(max(self.dm_kill_counts))
             self.phase = RoundPhase.FINISHED
             self.round_reason = f"time up, player{winner} wins with {self.dm_kill_counts[winner]} kills"
