@@ -1,3 +1,4 @@
+## DEPRECATED: Use hud.gd instead. Kept for reference.
 class_name HUDV2
 extends Control
 

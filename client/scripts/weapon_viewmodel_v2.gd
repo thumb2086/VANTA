@@ -1,3 +1,4 @@
+## DEPRECATED: Use weapon_viewmodel.gd instead. Kept for reference.
 class_name WeaponViewmodelV2
 extends Node3D
 

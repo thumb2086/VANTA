@@ -227,7 +227,6 @@ class Match:
 
     def _respawn_player(self, slot: int) -> None:
         """死鬥模式復活。"""
-        import random
         p = self.world.players[slot]
         p.alive = True
         p.health = 100
@@ -235,7 +234,7 @@ class Match:
         # 隨機重生點
         spawns = self.world.map_data.get("spawns_attackers", []) + self.world.map_data.get("spawns_defenders", [])
         if spawns:
-            sp = random.choice(spawns)
+            sp = self.world.rng.choice(spawns)
             p.pos = Vec3(sp["x"], sp["y"], sp["z"])
         self.event_log.append(f"dm: player{slot} respawned")
 

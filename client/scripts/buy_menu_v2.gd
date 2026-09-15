@@ -1,3 +1,4 @@
+## DEPRECATED: Use buy_menu.gd instead. Kept for reference.
 class_name BuyMenuV2
 extends Control
 

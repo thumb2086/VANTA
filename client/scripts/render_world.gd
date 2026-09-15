@@ -18,7 +18,7 @@ func build_map(map_json: Dictionary) -> void:
 	# 使用 MapLoader 載入完整地圖（牆面/站點/出生點/購買區/傳送門/繩索/光照/小地圖）
 	if MapLoader:
 		var loader := MapLoader.new()
-		loader.load_from_dict(map_json, self)
+		loader.load_from_json(map_json)
 		return
 	# Fallback：原始程序化地圖
 	_build_map_procedural(map_json)

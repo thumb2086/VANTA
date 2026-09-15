@@ -1,3 +1,4 @@
+## DEPRECATED: No active references found. Kept for reference.
 class_name AbilityEffects
 extends Node3D
 

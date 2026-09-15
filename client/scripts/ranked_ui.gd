@@ -1,3 +1,4 @@
+## DEPRECATED: No active references found. Kept for reference.
 class_name RankedUI
 extends Control
 

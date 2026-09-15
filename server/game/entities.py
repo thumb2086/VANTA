@@ -376,6 +376,13 @@ class World:
             self.spike.update(dt)
         if self.match is not None:
             self.match.step(dt)
+        # Tick ability effect zones (smoke/toxic/heal/etc.)
+        try:
+            from server.game.abilities import _ensure_effect_manager
+            em = _ensure_effect_manager(self)
+            em.update(dt, self)
+        except Exception:
+            pass
         # 好玩系統：highlight 播報（非阻塞）
         try:
             if self._highlights is None and self.match is not None:

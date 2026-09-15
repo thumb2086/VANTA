@@ -399,6 +399,16 @@ func _unhandled_input(event: InputEvent) -> void:
 						var credits: int = int(net.match_credits[net.slot]) if net.match_credits.size() > net.slot and net.slot >= 0 else 8000
 						bm.open_menu(credits)
 						Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	elif event is InputEventKey and event.pressed:
+		match event.keycode:
+			KEY_F1:
+				_toggle_observer()
+			KEY_F2:
+				_toggle_practice_ui()
+			KEY_F3:
+				_toggle_mission_ui()
+			KEY_F4:
+				_open_replay_viewer()
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
 		gallery.toggle()
 		if gallery.visible_now:
@@ -407,6 +417,67 @@ func _unhandled_input(event: InputEvent) -> void:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		_toggle_settings()
+
+
+func _toggle_observer() -> void:
+	if _observer_node == null:
+		if has_node("/root/Main/ObserverMode"):
+			_observer_node = get_node("/root/Main/ObserverMode")
+		else:
+			_observer_node = ObserverMode.new()
+			_observer_node.name = "ObserverMode"
+			add_child(_observer_node)
+			_observer_node.setup(cam, net)
+	if _observer_node and _observer_node.has_method("toggle"):
+		_observer_node.toggle()
+
+
+func _toggle_practice_ui() -> void:
+	if _practice_ui_node == null:
+		_practice_ui_node = get_node_or_null("/root/Main/PracticeUI")
+		if _practice_ui_node == null:
+			_practice_ui_node = preload("res://practice_range.tscn").instantiate() if ResourceLoader.exists("res://practice_range.tscn") else null
+			if _practice_ui_node:
+				add_child(_practice_ui_node)
+	if _practice_ui_node:
+		_practice_ui_node.visible = not _practice_ui_node.visible
+
+
+func _toggle_mission_ui() -> void:
+	var mission = get_node_or_null("/root/Main/MissionUI")
+	if mission == null:
+		mission = preload("res://mission_ui.tscn").instantiate() if ResourceLoader.exists("res://mission_ui.tscn") else null
+		if mission:
+			add_child(mission)
+	if mission:
+		mission.visible = not mission.visible
+
+
+func _open_replay_viewer() -> void:
+	var dir := DirAccess.open("user://replays")
+	if dir == null:
+		DirAccess.make_dir_absolute("user://replays")
+		dir = DirAccess.open("user://replays")
+	var latest := ""
+	var latest_time := 0
+	if dir:
+		dir.list_dir_begin()
+		var fname := dir.get_next()
+		while fname != "":
+			if fname.ends_with(".vrep"):
+				var ftime = dir.get_modified_time(fname)
+				if ftime > latest_time:
+					latest_time = ftime
+					latest = fname
+			fname = dir.get_next()
+		dir.list_dir_end()
+	if latest != "":
+		var replay_scene = preload("res://replay_viewer.tscn") if ResourceLoader.exists("res://replay_viewer.tscn") else null
+		if replay_scene:
+			var rv = replay_scene.instantiate()
+			add_child(rv)
+			if rv.has_method("load_replay"):
+				rv.load_replay("user://replays/" + latest)
 
 
 func _toggle_settings() -> void:
@@ -476,31 +547,31 @@ func _reconcile() -> void:
 func _consume_events() -> void:
 	for ev in net.events:
 		match int(ev["event"]):
-		NetClient.EV_KILL:
-			var killer := int(ev["p0"])
-			var victim := int(ev["p1"])
-			hud.push_feed("P%02d 擊殺 P%02d" % [killer, victim])
-			var vp: Vector3 = net.players.get(victim, {}).get("pos", Vector3.ZERO)
-			if vp != Vector3.ZERO:
-				vfx_mgr.spawn("kill_confirm", vp + Vector3(0, 1, 0))
-			if killer == net.slot and victim != net.slot:
-				# 我的擊殺：橫幅 + 紅 X + 連殺語音 + hitmarker
-				var wk: String = net.players.get(net.slot, {}).get("weapon", {}).get("key", "")
-				hud.killflash(false)
-				hud.show_kill_banner("P%02d" % victim, false, wk)
-				audio_mgr.play_hitmarker()
-				audio_mgr.play_kill()
-			elif victim == net.slot:
-				audio_mgr.play("damage_taken", 0.9, -2.0)
-				# 死亡旁觀畫面
-				var killer_name := "P%02d" % killer
-				var killer_wk: String = ""
-				var killer_pos: Vector3 = net.players.get(killer, {}).get("pos", Vector3.ZERO)
-				var my_pos: Vector3 = net.players.get(net.slot, {}).get("pos", Vector3.ZERO)
-				var dist := killer_pos.distance_to(my_pos)
-				if _death_overlay:
-					_death_overlay.set_own_info(net.slot, 0 if net.slot < 5 else 1)
-					_death_overlay.show_death(killer_name, killer_wk, false, dist)
+			NetClient.EV_KILL:
+				var killer := int(ev["p0"])
+				var victim := int(ev["p1"])
+				hud.push_feed("P%02d 擊殺 P%02d" % [killer, victim])
+				var vp: Vector3 = net.players.get(victim, {}).get("pos", Vector3.ZERO)
+				if vp != Vector3.ZERO:
+					vfx_mgr.spawn("kill_confirm", vp + Vector3(0, 1, 0))
+				if killer == net.slot and victim != net.slot:
+					# 我的擊殺：橫幅 + 紅 X + 連殺語音 + hitmarker
+					var wk: String = net.players.get(net.slot, {}).get("weapon", {}).get("key", "")
+					hud.killflash(false)
+					hud.show_kill_banner("P%02d" % victim, false, wk)
+					audio_mgr.play_hitmarker()
+					audio_mgr.play_kill()
+				elif victim == net.slot:
+					audio_mgr.play("damage_taken", 0.9, -2.0)
+					# 死亡旁觀畫面
+					var killer_name := "P%02d" % killer
+					var killer_wk: String = ""
+					var killer_pos: Vector3 = net.players.get(killer, {}).get("pos", Vector3.ZERO)
+					var my_pos: Vector3 = net.players.get(net.slot, {}).get("pos", Vector3.ZERO)
+					var dist := killer_pos.distance_to(my_pos)
+					if _death_overlay:
+						_death_overlay.set_own_info(net.slot, 0 if net.slot < 5 else 1)
+						_death_overlay.show_death(killer_name, killer_wk, false, dist)
 			NetClient.EV_SPIKE_PLANTED:
 				hud.announce("Spike 已安放！", Color(1.0, 0.3, 0.3))
 				audio_mgr.play_event(NetClient.EV_SPIKE_PLANTED)
@@ -746,6 +817,10 @@ func _update_flash_overlay(delta: float) -> void:
 		_flash_overlay.trigger(intensity)
 	net.flash_blind_events.clear()
 
+
+var _practice_range: Node = null
+var _practice_ui_node = null
+var _observer_node = null
 
 var _offline_flash_cooldown := 0.0
 func _passive_flash_check(delta: float) -> void:

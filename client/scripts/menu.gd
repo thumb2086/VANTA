@@ -1428,8 +1428,14 @@ func _start_game(game_mode: String) -> void:
 	# 根據模式決定伺服器端 mode 參數
 	var server_mode := "competitive"
 	var tag: String = str(MODES[_selected_mode]["tag"]) if _selected_mode >= 0 else game_mode
-	if tag == "dm":
+	if tag == "dm" or tag == "deathmatch":
 		server_mode = "deathmatch"
+	elif tag == "spikerush" or tag == "spike_rush":
+		server_mode = "spikerush"
+	elif tag == "swiftplay":
+		server_mode = "swiftplay"
+	elif tag == "teamdeathmatch" or tag == "tdm":
+		server_mode = "teamdeathmatch"
 	# 訓練模式使用離線模式（無需伺服器）
 	var ws_url: String
 	var net_mode: String

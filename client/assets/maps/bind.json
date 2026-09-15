@@ -74,10 +74,10 @@
     {"x": -2.0, "y": 0, "z": 22.0},
     {"x": 2.0, "y": 0, "z": 22.0}
   ],
-  "buy_zone_attackers": {"mn": {"x": -5.0, "y": 0, "z": -24.0}, "mx": {"x": 5.0, "y": 4, "z": -18.0}},
-  "buy_zone_defenders": {"mn": {"x": -5.0, "y": 0, "z": 18.0}, "mx": {"x": 5.0, "y": 4, "z": 24.0}},
+  "buy_zone_attackers": [{"x": -5.0, "y": 0, "z": -24.0}, {"x": 5.0, "y": 4, "z": -18.0}],
+  "buy_zone_defenders": [{"x": -5.0, "y": 0, "z": 18.0}, {"x": 5.0, "y": 4, "z": 24.0}],
   "teleporters": [
-    {"entrance": {"x": 10, "y": 0, "z": 5}, "exit": {"x": -18, "y": 0, "z": 5}, "cooldown": 10.0, "name": "ATeleport"},
-    {"entrance": {"x": -10, "y": 0, "z": 5}, "exit": {"x": 0, "y": 0, "z": 5}, "cooldown": 10.0, "name": "BTeleport"}
+    {"from": {"x": 10, "y": 0, "z": 5}, "to": {"x": -18, "y": 0, "z": 5}, "cooldown": 10.0, "name": "ATeleport"},
+    {"from": {"x": -10, "y": 0, "z": 5}, "to": {"x": 0, "y": 0, "z": 5}, "cooldown": 10.0, "name": "BTeleport"}
   ]
 }

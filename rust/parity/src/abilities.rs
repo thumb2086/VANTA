@@ -128,7 +128,7 @@ impl AbilityEffect {
             AbilityEffect::Nearsight { .. } => "nearsight",
             AbilityEffect::Suppression { .. } => "suppression",
             AbilityEffect::Beam { .. } => "beam",
-            AbilityEffect::StimBeacon { .. } => "trap",
+            AbilityEffect::StimBeacon { .. } => "stim_beacon",
         }
     }
 }
@@ -366,6 +366,242 @@ impl AbilityInstance {
                     damage: self.def.damage,
                 }
             }
+            // ─── Yoru ───
+            "fake_footstep" | "blindside" => {
+                let land = [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    0.5,
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ];
+                AbilityEffect::Flash {
+                    center: land,
+                    direction: aim_dir,
+                    radius: self.def.radius,
+                }
+            }
+            "gatecrash" | "from_the_shadows" | "dimensional_drift" => {
+                let dest = [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    caster_pos[1],
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ];
+                AbilityEffect::Teleport {
+                    from: caster_pos,
+                    to: dest,
+                    duration: self.def.duration,
+                }
+            }
+            // ─── Neon ───
+            "fast_lane" => {
+                let center = [
+                    caster_pos[0] + aim_dir[0] * 3.0,
+                    caster_pos[1],
+                    caster_pos[2] + aim_dir[2] * 3.0,
+                ];
+                let perp = if (aim_dir[0] * aim_dir[0] + aim_dir[2] * aim_dir[2]) > 0.01 {
+                    let len = (aim_dir[0] * aim_dir[0] + aim_dir[2] * aim_dir[2]).sqrt();
+                    [-aim_dir[2] / len, 0.0, aim_dir[0] / len]
+                } else {
+                    [1.0, 0.0, 0.0]
+                };
+                let half = 4.0;
+                let start = [
+                    center[0] - perp[0] * half,
+                    0.0,
+                    center[2] - perp[2] * half,
+                ];
+                let end = [
+                    center[0] + perp[0] * half,
+                    2.5,
+                    center[2] + perp[2] * half,
+                ];
+                AbilityEffect::Wall {
+                    start,
+                    end,
+                    duration: self.def.duration,
+                    team,
+                }
+            }
+            "relay_bolt" => {
+                let land = [
+                    caster_pos[0] + aim_dir[0] * 6.0,
+                    0.1,
+                    caster_pos[2] + aim_dir[2] * 6.0,
+                ];
+                AbilityEffect::Slow {
+                    center: land,
+                    radius: self.def.radius,
+                    duration: self.def.duration,
+                    potency: 1.0,
+                }
+            }
+            "high_gear" => {
+                let dest = [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    caster_pos[1],
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ];
+                AbilityEffect::Teleport {
+                    from: caster_pos,
+                    to: dest,
+                    duration: 0.4,
+                }
+            }
+            "overdrive" => AbilityEffect::Beam {
+                origin: caster_pos,
+                direction: aim_dir,
+                length: 15.0,
+                damage: self.def.damage,
+                radius: 1.0,
+            },
+            // ─── Sova ───
+            "shock_bolt" => {
+                let land = [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    0.1,
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ];
+                AbilityEffect::Frag {
+                    center: land,
+                    radius: self.def.radius,
+                    damage: self.def.damage,
+                }
+            }
+            "owl_drone" | "recon_bolt" => {
+                let land = [
+                    caster_pos[0] + aim_dir[0] * 10.0,
+                    0.5,
+                    caster_pos[2] + aim_dir[2] * 10.0,
+                ];
+                AbilityEffect::Trap {
+                    center: land,
+                    radius: self.def.radius,
+                    team,
+                }
+            }
+            "hunter_fury" => AbilityEffect::Beam {
+                origin: caster_pos,
+                direction: aim_dir,
+                length: 50.0,
+                damage: self.def.damage,
+                radius: 1.5,
+            },
+            // ─── Breach ───
+            "aftershock" | "rolling_earthquake" => {
+                let target = [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    0.0,
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ];
+                AbilityEffect::Frag {
+                    center: target,
+                    radius: self.def.radius,
+                    damage: self.def.damage,
+                }
+            }
+            "fault_line" => AbilityEffect::Beam {
+                origin: caster_pos,
+                direction: aim_dir,
+                length: 15.0,
+                damage: self.def.damage,
+                radius: 2.0,
+            },
+            "flashpoint" => {
+                let land = [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    0.5,
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ];
+                AbilityEffect::Flash {
+                    center: land,
+                    direction: aim_dir,
+                    radius: self.def.radius,
+                }
+            }
+            // ─── KAY/O ───
+            "fraggy" | "flashing" => {
+                let land = [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    0.5,
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ];
+                AbilityEffect::Flash {
+                    center: land,
+                    direction: aim_dir,
+                    radius: self.def.radius,
+                }
+            }
+            "zero_point" | "null_cmd" => AbilityEffect::Suppression {
+                target_slot: 0,
+                duration: self.def.duration,
+            },
+            // ─── Omen ───
+            "paranoia" => AbilityEffect::Nearsight {
+                center: [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    1.0,
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ],
+                radius: self.def.radius,
+                duration: self.def.duration,
+            },
+            "shrouded_step" => {
+                let dest = [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    caster_pos[1],
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ];
+                AbilityEffect::Teleport {
+                    from: caster_pos,
+                    to: dest,
+                    duration: 0.5,
+                }
+            }
+            "dark_cover" => {
+                let target = [
+                    caster_pos[0] + aim_dir[0] * 15.0,
+                    0.0,
+                    caster_pos[2] + aim_dir[2] * 15.0,
+                ];
+                AbilityEffect::Smoke {
+                    center: target,
+                    radius: self.def.radius,
+                    duration: self.def.duration,
+                    team,
+                }
+            }
+            // ─── Viper ───
+            "poison_cloud" => {
+                let land = [
+                    caster_pos[0] + aim_dir[0] * 6.0,
+                    0.5,
+                    caster_pos[2] + aim_dir[2] * 6.0,
+                ];
+                AbilityEffect::Smoke {
+                    center: land,
+                    radius: self.def.radius,
+                    duration: self.def.duration,
+                    team,
+                }
+            }
+            "snake_bite" => {
+                let land = [
+                    caster_pos[0] + aim_dir[0] * 8.0,
+                    0.1,
+                    caster_pos[2] + aim_dir[2] * 8.0,
+                ];
+                AbilityEffect::Frag {
+                    center: land,
+                    radius: self.def.radius,
+                    damage: self.def.damage,
+                }
+            }
+            "viper_pit" => AbilityEffect::Smoke {
+                center: caster_pos,
+                radius: self.def.radius,
+                duration: self.def.duration,
+                team,
+            },
             // ─── Generic fallback ───
             _ => match self.def.ability_type {
                 AbilityType::Smoke => AbilityEffect::Smoke {
@@ -541,6 +777,13 @@ impl AgentAbilities {
             "jett" => Self::jett(),
             "sage" => Self::sage(),
             "brimstone" => Self::brimstone(),
+            "yoru" => Self::yoru(),
+            "neon" => Self::neon(),
+            "sova" => Self::sova(),
+            "breach" => Self::breach(),
+            "kayo" => Self::kayo(),
+            "omen" => Self::omen(),
+            "viper" => Self::viper(),
             _ => Vec::new(),
         }
     }
@@ -712,6 +955,405 @@ impl AgentAbilities {
                 radius: 5.0,
                 damage: 150.0,
                 description: "在指定區域延遲後造成範圍致死傷害",
+            },
+        ]
+    }
+
+    fn yoru() -> Vec<AbilityDef> {
+        vec![
+            // C: Fakeout — 假腳步聲誘餌
+            AbilityDef {
+                name: "fake_footstep",
+                agent: "yoru",
+                slot: AbilitySlot::C,
+                ability_type: AbilityType::Trap,
+                cooldown: 15.0,
+                charges: 1,
+                duration: 4.0,
+                radius: 5.0,
+                damage: 0.0,
+                description: "投出假腳步聲誘餌",
+            },
+            // Q: Blindside — 穿牆閃光
+            AbilityDef {
+                name: "blindside",
+                agent: "yoru",
+                slot: AbilitySlot::Q,
+                ability_type: AbilityType::Flash,
+                cooldown: 22.0,
+                charges: 1,
+                duration: 3.0,
+                radius: 6.0,
+                damage: 0.0,
+                description: "投出穿牆閃光彈",
+            },
+            // E: Gatecrash — 傳送
+            AbilityDef {
+                name: "gatecrash",
+                agent: "yoru",
+                slot: AbilitySlot::E,
+                ability_type: AbilityType::Teleport,
+                cooldown: 25.0,
+                charges: 1,
+                duration: 0.0,
+                radius: 0.0,
+                damage: 0.0,
+                description: "傳送到瞄準方向前方",
+            },
+            // X: Dimensional Drift — 隱形傳送
+            AbilityDef {
+                name: "dimensional_drift",
+                agent: "yoru",
+                slot: AbilitySlot::X,
+                ability_type: AbilityType::Teleport,
+                cooldown: 0.0,
+                charges: 1,
+                duration: 8.0,
+                radius: 0.0,
+                damage: 0.0,
+                description: "隱形並傳送到前方位置",
+            },
+        ]
+    }
+
+    fn neon() -> Vec<AbilityDef> {
+        vec![
+            // C: Fast Lane — 電牆
+            AbilityDef {
+                name: "fast_lane",
+                agent: "neon",
+                slot: AbilitySlot::C,
+                ability_type: AbilityType::Wall,
+                cooldown: 18.0,
+                charges: 1,
+                duration: 7.0,
+                radius: 8.0,
+                damage: 0.0,
+                description: "沿前方生成電牆",
+            },
+            // Q: Relay Bolt — 減速球
+            AbilityDef {
+                name: "relay_bolt",
+                agent: "neon",
+                slot: AbilitySlot::Q,
+                ability_type: AbilityType::Slow,
+                cooldown: 15.0,
+                charges: 1,
+                duration: 5.0,
+                radius: 4.0,
+                damage: 0.0,
+                description: "投出接力閃電球",
+            },
+            // E: High Gear — 衝刺
+            AbilityDef {
+                name: "high_gear",
+                agent: "neon",
+                slot: AbilitySlot::E,
+                ability_type: AbilityType::Teleport,
+                cooldown: 8.0,
+                charges: 2,
+                duration: 1.0,
+                radius: 0.0,
+                damage: 0.0,
+                description: "瞬間加速向前衝刺",
+            },
+            // X: Overdrive — 閃電光束
+            AbilityDef {
+                name: "overdrive",
+                agent: "neon",
+                slot: AbilitySlot::X,
+                ability_type: AbilityType::Beam,
+                cooldown: 0.0,
+                charges: 1,
+                duration: 0.0,
+                radius: 1.0,
+                damage: 30.0,
+                description: "發射閃電光束造成持續傷害",
+            },
+        ]
+    }
+
+    fn sova() -> Vec<AbilityDef> {
+        vec![
+            // C: Shock Bolt — 震擊箭
+            AbilityDef {
+                name: "shock_bolt",
+                agent: "sova",
+                slot: AbilitySlot::C,
+                ability_type: AbilityType::Frag,
+                cooldown: 25.0,
+                charges: 2,
+                duration: 1.5,
+                radius: 5.0,
+                damage: 90.0,
+                description: "投出震擊箭造成範圍傷害",
+            },
+            // Q: Owl Drone — 貓頭鷹無人機
+            AbilityDef {
+                name: "owl_drone",
+                agent: "sova",
+                slot: AbilitySlot::Q,
+                ability_type: AbilityType::Trap,
+                cooldown: 20.0,
+                charges: 1,
+                duration: 3.0,
+                radius: 4.0,
+                damage: 0.0,
+                description: "操控無人機偵查敵方位置",
+            },
+            // E: Recon Bolt — 偵查箭
+            AbilityDef {
+                name: "recon_bolt",
+                agent: "sova",
+                slot: AbilitySlot::E,
+                ability_type: AbilityType::Trap,
+                cooldown: 15.0,
+                charges: 1,
+                duration: 2.0,
+                radius: 6.0,
+                damage: 0.0,
+                description: "投出偵查箭標記範圍內敵人",
+            },
+            // X: Hunter's Fury — 獵手之怒
+            AbilityDef {
+                name: "hunter_fury",
+                agent: "sova",
+                slot: AbilitySlot::X,
+                ability_type: AbilityType::Beam,
+                cooldown: 0.0,
+                charges: 3,
+                duration: 0.0,
+                radius: 1.5,
+                damage: 80.0,
+                description: "發射三道穿透光束",
+            },
+        ]
+    }
+
+    fn breach() -> Vec<AbilityDef> {
+        vec![
+            // C: Aftershock — 餘震
+            AbilityDef {
+                name: "aftershock",
+                agent: "breach",
+                slot: AbilitySlot::C,
+                ability_type: AbilityType::Frag,
+                cooldown: 20.0,
+                charges: 1,
+                duration: 0.0,
+                radius: 2.5,
+                damage: 60.0,
+                description: "穿牆爆炸造成範圍傷害",
+            },
+            // Q: Fault Line — 斷層
+            AbilityDef {
+                name: "fault_line",
+                agent: "breach",
+                slot: AbilitySlot::Q,
+                ability_type: AbilityType::StimBeacon,
+                cooldown: 18.0,
+                charges: 1,
+                duration: 2.5,
+                radius: 2.0,
+                damage: 30.0,
+                description: "沿瞄準方向發射地震波暈眩敵人",
+            },
+            // E: Flashpoint — 閃光
+            AbilityDef {
+                name: "flashpoint",
+                agent: "breach",
+                slot: AbilitySlot::E,
+                ability_type: AbilityType::Flash,
+                cooldown: 25.0,
+                charges: 1,
+                duration: 3.0,
+                radius: 6.0,
+                damage: 0.0,
+                description: "沿牆壁反彈閃光彈",
+            },
+            // X: Rolling Earthquake — 滾動地震
+            AbilityDef {
+                name: "rolling_earthquake",
+                agent: "breach",
+                slot: AbilitySlot::X,
+                ability_type: AbilityType::Beam,
+                cooldown: 0.0,
+                charges: 1,
+                duration: 3.0,
+                radius: 2.0,
+                damage: 50.0,
+                description: "扇形範圍暈眩+傷害穿透牆壁",
+            },
+        ]
+    }
+
+    fn kayo() -> Vec<AbilityDef> {
+        vec![
+            // C: Fraggy — 碎片手榴彈
+            AbilityDef {
+                name: "fraggy",
+                agent: "kayo",
+                slot: AbilitySlot::C,
+                ability_type: AbilityType::Frag,
+                cooldown: 25.0,
+                charges: 1,
+                duration: 1.5,
+                radius: 5.0,
+                damage: 90.0,
+                description: "投出碎片手榴彈造成範圍傷害",
+            },
+            // Q: Flashing — 閃光
+            AbilityDef {
+                name: "flashing",
+                agent: "kayo",
+                slot: AbilitySlot::Q,
+                ability_type: AbilityType::Flash,
+                cooldown: 25.0,
+                charges: 1,
+                duration: 3.0,
+                radius: 6.0,
+                damage: 0.0,
+                description: "投出閃光彈致盲敵人",
+            },
+            // E: ZERO/point — 範圍技能封鎖
+            AbilityDef {
+                name: "zero_point",
+                agent: "kayo",
+                slot: AbilitySlot::E,
+                ability_type: AbilityType::Suppression,
+                cooldown: 20.0,
+                charges: 1,
+                duration: 3.0,
+                radius: 8.0,
+                damage: 0.0,
+                description: "封鎖範圍內敵方技能",
+            },
+            // X: NULL/cmd — 大範圍封鎖
+            AbilityDef {
+                name: "null_cmd",
+                agent: "kayo",
+                slot: AbilitySlot::X,
+                ability_type: AbilityType::Suppression,
+                cooldown: 0.0,
+                charges: 1,
+                duration: 6.0,
+                radius: 12.0,
+                damage: 0.0,
+                description: "大範圍技能封鎖",
+            },
+        ]
+    }
+
+    fn omen() -> Vec<AbilityDef> {
+        vec![
+            // C: Paranoia — 穿牆近視彈
+            AbilityDef {
+                name: "paranoia",
+                agent: "omen",
+                slot: AbilitySlot::C,
+                ability_type: AbilityType::Nearsight,
+                cooldown: 22.0,
+                charges: 1,
+                duration: 3.0,
+                radius: 3.0,
+                damage: 0.0,
+                description: "發射穿牆近視彈封鎖視野",
+            },
+            // Q: Shrouded Step — 暗影步
+            AbilityDef {
+                name: "shrouded_step",
+                agent: "omen",
+                slot: AbilitySlot::Q,
+                ability_type: AbilityType::Teleport,
+                cooldown: 25.0,
+                charges: 1,
+                duration: 0.0,
+                radius: 0.0,
+                damage: 0.0,
+                description: "傳送到瞄準方向前方",
+            },
+            // E: Dark Cover — 黑暗屏障
+            AbilityDef {
+                name: "dark_cover",
+                agent: "omen",
+                slot: AbilitySlot::E,
+                ability_type: AbilityType::Smoke,
+                cooldown: 12.0,
+                charges: 2,
+                duration: 14.0,
+                radius: 3.5,
+                damage: 0.0,
+                description: "在遠處投放煙霧",
+            },
+            // X: From the Shadows — 隱形傳送
+            AbilityDef {
+                name: "from_the_shadows",
+                agent: "omen",
+                slot: AbilitySlot::X,
+                ability_type: AbilityType::Teleport,
+                cooldown: 0.0,
+                charges: 1,
+                duration: 8.0,
+                radius: 0.0,
+                damage: 0.0,
+                description: "隱形並傳送到地圖任意位置",
+            },
+        ]
+    }
+
+    fn viper() -> Vec<AbilityDef> {
+        vec![
+            // C: Toxic Screen — 毒幕
+            AbilityDef {
+                name: "toxic_screen",
+                agent: "viper",
+                slot: AbilitySlot::C,
+                ability_type: AbilityType::Smoke,
+                cooldown: 14.0,
+                charges: 1,
+                duration: 8.0,
+                radius: 20.0,
+                damage: 0.0,
+                description: "Deploy a line of toxic gas",
+            },
+            // Q: Poison Cloud — 毒雲
+            AbilityDef {
+                name: "poison_cloud",
+                agent: "viper",
+                slot: AbilitySlot::Q,
+                ability_type: AbilityType::Smoke,
+                cooldown: 8.0,
+                charges: 1,
+                duration: 7.5,
+                radius: 5.0,
+                damage: 0.0,
+                description: "Throw a poison cloud",
+            },
+            // E: Snake Bite — 蛇吻
+            AbilityDef {
+                name: "snake_bite",
+                agent: "viper",
+                slot: AbilitySlot::E,
+                ability_type: AbilityType::Frag,
+                cooldown: 12.0,
+                charges: 2,
+                duration: 5.5,
+                radius: 4.0,
+                damage: 25.0,
+                description: "Launch corrosive projectile",
+            },
+            // X: Viper's Pit — 毒蛇之穴
+            AbilityDef {
+                name: "viper_pit",
+                agent: "viper",
+                slot: AbilitySlot::X,
+                ability_type: AbilityType::Smoke,
+                cooldown: 10.0,
+                charges: 1,
+                duration: 12.0,
+                radius: 10.0,
+                damage: 0.0,
+                description: "Emission zone that decays enemies",
             },
         ]
     }

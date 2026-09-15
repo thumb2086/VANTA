@@ -1,3 +1,4 @@
+## DEPRECATED: Use match_results.gd instead. Kept for reference.
 class_name MatchResultsV2
 extends Control
 

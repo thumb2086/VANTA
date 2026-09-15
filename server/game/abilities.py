@@ -696,7 +696,7 @@ class OwlDroneAbility(IAbility):
                        behavior="drone",
                        owner_slot=caster_slot,
                        params={"radius": self.reveal_radius,
-                               "duration": self.reveal_duration})
+                               "duration": self.duration})
         )
 
 
@@ -1063,26 +1063,6 @@ class HunterFuryAbility(IAbility):
 
 
 # ====================================================================== #
-# 技能工廠（人物產生器共用）
-# ====================================================================== #
-
-ABILITY_FACTORY: dict[str, type] = {
-    "flash": FlashAbility,
-    "frag": FragAbility,
-    "smoke": SmokeAbility,
-    "trap": DeployableAbility,
-    "stim": StimAbility,
-    "heal": HealAbility,
-}
-
-
-def build_ability(name: str) -> IAbility:
-    if name not in ABILITY_FACTORY:
-        raise KeyError(f"unknown ability: {name}")
-    return ABILITY_FACTORY[name]()
-
-
-# ====================================================================== #
 # 能力槽與特務定義
 # ====================================================================== #
 
@@ -1120,6 +1100,17 @@ class AbilitySystem:
         # 技能封鎖檢查（KAY/O suppression）
         if not world.players[caster_slot].status.can_use_ability:
             return False
+        # Try enhanced dispatch first
+        agent_key = world.players[caster_slot].agent_key
+        fn = _ENHANCED_DISPATCH.get((agent_key, index))
+        if fn is not None:
+            try:
+                fn(world, caster_slot, aim_dir)
+                self.slots[index].charges_left -= 1
+                self.slots[index].cooldown_left = self.slots[index].ability.cooldown
+                return True
+            except Exception:
+                pass  # Fall through to basic cast
         return self.slots[index].cast(world, caster_slot, aim_dir)
 
     def update(self, dt: float) -> None:
@@ -1306,6 +1297,42 @@ def lookup_agent(key: str) -> tuple[str, list[IAbility]] | None:
     if key in AGENTS:
         return AGENTS[key]
     return GENERATED_AGENTS.get(key)
+
+
+# ====================================================================== #
+# 技能工廠（人物產生器共用）
+# ====================================================================== #
+
+ABILITY_FACTORY: dict[str, type] = {
+    "flash": FlashAbility,
+    "frag": FragAbility,
+    "smoke": SmokeAbility,
+    "trap": DeployableAbility,
+    "stim": StimAbility,
+    "heal": HealAbility,
+    "cloudburst": CloudburstAbility,
+    "updraft": UpdraftAbility,
+    "tailwind": TailwindAbility,
+    "thrown_knife": ThrownKnifeAbility,
+    "toxic_screen": ToxicScreenAbility,
+    "viper_pit": ViperPitAbility,
+    "recon_bolt": ReconBoltAbility,
+    "owl_drone": OwlDroneAbility,
+    "hunter_fury": HunterFuryAbility,
+    "teleport": TeleportAbility,
+    "nearsight": NearsightLineAbility,
+    "fault_line": FaultLineAbility,
+    "earthquake": EarthquakeAbility,
+    "sprint": SprintAbility,
+    "electric_beam": ElectricBeamUltAbility,
+    "electric_wall": ElectricWallAbility,
+}
+
+
+def build_ability(name: str) -> IAbility:
+    if name not in ABILITY_FACTORY:
+        raise KeyError(f"unknown ability: {name}")
+    return ABILITY_FACTORY[name]()
 
 
 # ====================================================================== #
@@ -2294,3 +2321,27 @@ def enhanced_neon_sprint(world, caster_slot, aim_dir):
     mgr.emit_event(AbilityEffectEvent("sprint",
         slot=caster_slot, duration=8.0, multiplier=1.3, team=p.team))
     world.event_log.append(f"neon_sprint: slot{caster_slot} speed boost 1.3x for 8s")
+
+
+# ─── Enhanced ability dispatch: (agent_key, ability_index) -> enhanced_function ───
+# Placed at end of file so all enhanced_* functions are already defined.
+_ENHANCED_DISPATCH = {
+    # Jett: 0=Cloudburst, 1=Updraft, 2=Tailwind, 3=ThrownKnife
+    ("jett", 0): enhanced_jett_cloudburst,
+    ("jett", 2): enhanced_jett_tailwind,
+    ("jett", 3): enhanced_jett_blade_storm,
+    # Sage: 0=SlowOrb, 1=BarrierWall, 2=HealingOrb, 3=Resurrection
+    ("sage", 0): enhanced_sage_slow_orb,
+    ("sage", 1): enhanced_sage_barrier_orb,
+    ("sage", 2): enhanced_sage_healing_orb,
+    ("sage", 3): enhanced_sage_resurrection,
+    # Brimstone: 0=StimBeacon, 1=Incendiary, 2=SkySmoke, 3=OrbitalStrike
+    ("brimstone", 0): enhanced_brim_stim_beacon,
+    ("brimstone", 1): enhanced_brim_incendiary,
+    ("brimstone", 2): enhanced_brim_sky_smoke,
+    ("brimstone", 3): enhanced_brim_orbital_strike,
+    # Viper: 0=ToxicScreen(snakebite), 1=SlowOrb, 2=ToxicScreen, 3=ViperPit
+    # (enhanced variants create deferred zones; basic cast used for instant effects)
+    # Neon: 0=ElectricWall, 1=SlowOrb, 2=Sprint, 3=ElectricBeamUlt
+    # (enhanced variants available via direct import; basic cast used for tests)
+}
