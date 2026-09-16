@@ -46,6 +46,8 @@ CATEGORIES = {
     "skin_cards": (os.path.join("skins", "cards"), os.path.join("skins", "cards"), ".svg"),
     # vfx2 的三個單檔 JSON（蓝图 / 精靈 / 貼花）；完整資料亦已內嵌在 skins.json
     "vfx2": ("vfx", "vfx", ("blueprints.json", "sprites.json", "decals.json")),
+    # 後座/準度 bundle：客戶端準星與視角模型要用同一套數字
+    "recoil": ("recoil", "recoil", ".json"),
 }
 
 # 上一次匯出寫了哪些檔（相對 client/assets 的路徑）。`--clean` 只照這份清單回收，

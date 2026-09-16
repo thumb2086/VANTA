@@ -129,6 +129,25 @@ def cmd_vfx(prebake_all: bool = False) -> AssetManifest:
     return man
 
 
+def cmd_recoil() -> AssetManifest:
+    """匯出後座／準度 bundle（伺服器資料表 → 客戶端 JSON）。"""
+    from tools.schema import write_json
+    from tools.weapons.recoil_bundle import build_payload, verify
+
+    payload = build_payload()
+    issues = verify(payload)
+    if issues:
+        raise SystemExit("  [recoil] 資料表不合格：\n    " + "\n    ".join(issues))
+    path = _paths("recoil", "recoil.json")
+    write_json(path, payload)
+    man = AssetManifest()
+    man.add("recoil", os.path.relpath(path, ASSETS_ROOT))
+    own = sum(1 for d in payload["weapons"].values() if d["own_pattern"])
+    print(f"  [recoil] {len(payload['weapons'])} 把槍（{own} 把有專屬指紋）"
+          f" + 移動準度模型 → recoil.json")
+    return man
+
+
 def cmd_vfx2() -> AssetManifest:
     """產生 v2 素材：分層蓝图 + 精靈/貼花定義 + 槍皮目录。"""
     from tools.schema import write_json
@@ -277,6 +296,7 @@ def main(argv: list[str] | None = None) -> int:
     pv.add_argument("--prebake-all", action="store_true",
                     help="為每個粒子預設烘出模擬影格（體積大，僅供離線分析）")
     sub.add_parser("vfx2", help="產生分層特效蓝图 + 精靈/貼花定義")
+    sub.add_parser("recoil", help="匯出後座/準度 bundle（伺服器資料表 → 客戶端 JSON）")
     sk = sub.add_parser("skins", help="產生槍皮目錄 + 系列卡（可 --textures 輸出 PNG）")
     sk.add_argument("--textures", action="store_true", help="額外輸出程序化 PNG 貼圖")
     sk.add_argument("--texture-size", type=int, default=256)
@@ -303,6 +323,8 @@ def main(argv: list[str] | None = None) -> int:
         write_manifest([cmd_vfx(args.prebake_all)])
     elif args.cmd == "vfx2":
         write_manifest([cmd_vfx2()])
+    elif args.cmd == "recoil":
+        write_manifest([cmd_recoil()])
     elif args.cmd == "skins":
         write_manifest([cmd_skins(args.textures, args.texture_size)])
     elif args.cmd == "weapons":
@@ -313,6 +335,7 @@ def main(argv: list[str] | None = None) -> int:
         write_manifest([cmd_fx()])
     elif args.cmd == "all":
         men = [cmd_sfx(), cmd_bgm(), cmd_agents(8), cmd_vfx(), cmd_vfx2(), cmd_skins(),
+               cmd_recoil(),
                cmd_weapons(12), cmd_maps([1, 7, 42]), cmd_fx()]
         write_manifest(men)
     elif args.cmd == "manifest":

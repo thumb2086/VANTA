@@ -40,6 +40,8 @@ func run_all() -> void:
 	print("")
 	print(">>> Suite 2: Script 語法驗證 <<<")
 	var suite2_results := _run_syntax_check()
+	# 手感契約：後座/準度 bundle 必須載入得動且與伺服器同源（資料驅動，非寫死）
+	suite2_results.append_array(_run_recoil_bundle_check())
 
 	# --- Suite 3: 場景結構完整性 ---
 	print("")
@@ -57,6 +59,7 @@ func _run_syntax_check() -> Array:
 		"res://scripts/render_world.gd",
 		"res://scripts/player_rig.gd",
 		"res://scripts/hud.gd",
+		"res://scripts/recoil_model.gd",
 		"res://scripts/buy_menu.gd",
 		"res://scripts/net_client.gd",
 		"res://scripts/audio_manager.gd",
@@ -109,6 +112,48 @@ func _run_scene_structure_check() -> Array:
 		inst.queue_free()
 		var detail := "通過" if ok else "缺少: %s" % str(missing)
 		_add_suite_result(results, sc["path"], ok, detail)
+	return results
+
+
+func _run_recoil_bundle_check() -> Array:
+	var results := []
+	var bundle: Dictionary = RecoilModel.bundle()
+	var weapons: Dictionary = bundle.get("weapons", {})
+	_add_suite_result(results, "recoil.json 存在", not bundle.is_empty(),
+			"%d 把槍" % weapons.size() if not bundle.is_empty()
+			else "缺件：請跑 python3 -m tools.cli recoil && python3 -m tools.godot.export")
+	_add_suite_result(results, "bundle 版本", int(bundle.get("version", 0)) == 1,
+			"version=%s" % str(bundle.get("version", "?")))
+	var m := RecoilModel.new()
+	var ok := m.setup("vandal")
+	_add_suite_result(results, "vandal 圖案載入", ok and m.pitch_pattern.size() > 0,
+			"%d 發，首發 %.2f°" % [m.pitch_pattern.size(), m.pitch_pattern[0]] if ok else "setup 失敗")
+	m.fire(0.0)
+	var first := m.pitch
+	m.hard_reset()
+	m.fire(0.0)
+	m.fire(0.03)
+	_add_suite_result(results, "图案單調上升", m.pitch > first,
+			"%.2f° > %.2f°" % [m.pitch, first])
+	# 恢復：停火超過 reset_time 後必須回吐到 0（這是「放開扳機」的手感來源）
+	var t := 0.03 + m.reset_time + 0.02
+	for i in range(600):
+		t += 0.01
+		m.update(t, 0.01)
+	_add_suite_result(results, "停火後完全恢復", m.recovered(),
+			"pitch=%.3f yaw=%.3f" % [m.pitch, m.yaw])
+	# 移動準度排序：蹲（0.35）比跑動好、空中（1.25）最差
+	var run_d := m.movement_error_deg(1.0, false, false, false, 9.9)
+	var crouch_d := m.movement_error_deg(1.0, false, true, false, 9.9)
+	var air_d := m.movement_error_deg(0.0, false, false, true, 9.9)
+	_add_suite_result(results, "移動準度排序", crouch_d < run_d and air_d > run_d,
+			"蹲 %.2f < 跑 %.2f < 空中 %.2f" % [crouch_d, run_d, air_d])
+	# 準星=真擴散圓：連射後必須比首發大
+	var d0 := m.spread_deg(0.0, false, false, false, 9.9, false)
+	for i in range(4):
+		m.fire(10.0 + float(i) * 0.1)
+	var d1 := m.spread_deg(0.0, false, false, false, 9.9, false)
+	_add_suite_result(results, "連射準星擴張", d1 > d0, "%.4f° → %.4f°" % [d0, d1])
 	return results
 
 

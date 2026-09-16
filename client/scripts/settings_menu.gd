@@ -20,6 +20,10 @@ var crosshair_thickness := 2.0 # 線條粗細
 var crosshair_outline := false # 外框
 var crosshair_dot := true      # 中央點
 var crosshair_style := 0       # 0=十字, 1=圓形, 2=點
+# 手感：與 hud.gd / VantaGlobal 同名（準星＝真的擴散圓）
+var crosshair_spread_linked := true
+var crosshair_spread_scale := 8.0
+var recoil_indicator := false
 # 音量
 var master_volume := 80
 var sfx_volume := 80
@@ -159,6 +163,13 @@ func _build_settings_panel() -> ScrollContainer:
 	content.add_child(_toggle_setting("準心外框", crosshair_outline, func(v): crosshair_outline = v))
 	content.add_child(_toggle_setting("中央點", crosshair_dot, func(v): crosshair_dot = v))
 	content.add_child(_slider_setting("準心樣式", 0, 2, crosshair_style, func(v): crosshair_style = int(v), ["十字", "圓形", "點"]))
+	content.add_child(_section_header("手感 / 準度回饋"))
+	content.add_child(_toggle_setting("準星反映真實準度", crosshair_spread_linked,
+			func(v): crosshair_spread_linked = v))
+	content.add_child(_slider_setting("準星擴張倍率", 2.0, 24.0, crosshair_spread_scale,
+			func(v): crosshair_spread_scale = v))
+	content.add_child(_toggle_setting("後座图案預覽（練習）", recoil_indicator,
+			func(v): recoil_indicator = v))
 	# ── 音量設定 ──
 	content.add_child(_section_header("🔊 音量設定"))
 	content.add_child(_slider_setting("主音量", 0, 100, master_volume, func(v): master_volume = int(v)))
@@ -371,6 +382,13 @@ func _apply_settings() -> void:
 		g.crosshair_outline = crosshair_outline
 		g.crosshair_dot = crosshair_dot
 		g.crosshair_style = crosshair_style
+		g.crosshair_spread_linked = crosshair_spread_linked
+		g.crosshair_spread_scale = crosshair_spread_scale
+		g.recoil_indicator = recoil_indicator
+	# 即時套用到戰場 HUD（組內廣播，不假設節點路徑）
+	for n in get_tree().get_nodes_in_group("vanta_hud"):
+		if n.has_method("reload_crosshair_config"):
+			n.call("reload_crosshair_config")
 		g.fov = fov
 		g.colorblind_mode = colorblind_mode
 		g.font_size_index = font_size_index

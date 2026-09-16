@@ -51,9 +51,10 @@ impl WeaponState {
             return false;
         }
         self.mag -= 1;
-        let (p, y) = self.recoil.fire(now);
-        self.aim_pitch_offset += p;
-        self.aim_yaw_offset += y;
+        self.recoil.fire(now);
+        // 準線偏移取控制器的累積值（會隨停火恢復）——對齊 Python weapon_state.py
+        self.aim_pitch_offset = self.recoil.pitch;
+        self.aim_yaw_offset = self.recoil.yaw;
 
         // Odin 旋轉加速：持續開火時射速提升（12→15.6 rps）
         let mut fire_rate = self.stats.fire_rate_rps;
@@ -92,6 +93,8 @@ impl WeaponState {
     /// 每 tick 更新（後座力恢復 + 換彈進度）
     pub fn update(&mut self, now: f64, dt: f64) {
         self.recoil.update(now, dt);
+        self.aim_pitch_offset = self.recoil.pitch;
+        self.aim_yaw_offset = self.recoil.yaw;
         if self.reloading {
             self.reload_progress += dt;
             if self.reload_progress >= self.stats.reload_time {
@@ -100,6 +103,7 @@ impl WeaponState {
                 self.mag += take;
                 self.reserve -= take;
                 self.reloading = false;
+                self.recoil.reset_pattern();
             }
         }
     }

@@ -99,6 +99,11 @@ impl RecoilController {
         }
     }
 
+    /// 換彈後圖案回到第 1 發（對齊 Python `reset_pattern`）
+    pub fn reset_pattern(&mut self) {
+        self.bullet_index = 0;
+    }
+
     pub fn fully_recovered(&self) -> bool {
         self.pitch.abs() < 1e-9 && self.yaw.abs() < 1e-9
     }

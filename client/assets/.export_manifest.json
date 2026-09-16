@@ -32,6 +32,7 @@
     "maps/map_seed1.json",
     "maps/map_seed42.json",
     "maps/map_seed7.json",
+    "recoil/recoil.json",
     "sfx/ability_cast.wav",
     "sfx/araxys_shot.wav",
     "sfx/body_hit.wav",
@@ -132,6 +133,6 @@
     "weapons/weapon_10_bulldog.json",
     "weapons/weapon_11_guardian.json"
   ],
-  "count": 131,
+  "count": 132,
   "note": "tools.godot.export 產出清單；--clean 只照此清單回收"
 }

@@ -16,11 +16,12 @@
 | 附加 | **全自動 AI 對戰示範**（`scripts/demo_match.py`） | ✅ |
 | 附加 | **可程式化素材工具鏈**（`tools/`：音效/**BGM**/武器模組/地圖編輯/VFX/擊殺特效/**人物**/CLI） | ✅ |
 | 附加 | **Godot 4 客戶端渲染層**（`client/`：UDP 連線、預測、HUD、音效/BGM/VFX 播放） | ✅ |
+| 附加 | **槍支手感資料鏈**（19/19 每槍專屬後座图案、準星＝伺服器真實擴散圓、自動／連點射速、換彈重置图案） | ✅ |
 | 附加 | **程序化動畫系統**（`client/`：武器視角模型換槍/換彈/開火/切刀/**檢視(Y)**/bob/ADS、第三人稱動作、動畫展示場） | ✅ |
 | 附加 | **伺服器權威反作弊**（`server/netcode/anticheat.py`：輸入/行動/射速洪水、傳送/加速/出界偵測＋修正＋踢除） | ✅ |
 | 附加 | **Rust 遷移藍圖＋跨語言 parity 實證（M1-M6, 純 Rust 伺服器完整對戰閉環）**（`rust/parity/`：移動/後座力(RNG)/彈道(Hitbox/穿透)/封包 SerDe 全數位元組級一致，~560x 加速） | ✅ |
 
-**282 個單元/整合測試全綠**（含純 Rust 伺服器 selftest：移動/射擊/經濟/Spike/購買/拆除/回合；workers 部署測試納入同一 pytest 執行）。端到端：10 客戶端打完整場回合；
+**307 個單元/整合測試全綠**（含純 Rust 伺服器 selftest：移動/射擊/經濟/Spike/購買/拆除/回合；workers 部署測試納入同一 pytest 執行）。端到端：10 客戶端打完整場回合；
 AI 示範：5v5 整場比賽 + Spike 安放/拆除/爆炸展示；
 工具鏈：一鍵產生 70+ 素材，生成的地圖與武器可直接進遊戲；
 Godot 客戶端：透過 UDP 連線權威伺服器實時渲染（地圖/玩家/HUD/音效/特效）。
@@ -70,11 +71,29 @@ Python 3.11+，零第三方依賴（測試用 pytest）。
 ```bash
 python3 -m tools.cli skins            # 槍皮目錄 + 系列卡 → tools/assets/
 python3 -m tools.cli vfx2             # 分層特效藍圖 / 精靈 / 貼花
-python3 -m tools.godot.export         # 匯入 client/assets/（全部素材（目前 131 個））
+python3 -m tools.godot.export         # 匯入 client/assets/（全部素材（目前 132 個））
 python3 -m pytest -q tests/test_tools_skins.py   # 78 項（含跨語言契約）
 ```
 
 主選單 `🛡` 進兵工廠（`Esc` 返回）。完整設計與取捨見 `docs/09_visual_polish.md`。
+
+## 槍支手感：後座／準度（資料驅動）
+
+開槍的三件事——準星、槍身、彈道——現在讀的是**同一份**由工具鏈匯出的數字：
+
+```bash
+python3 -m tools.cli recoil           # 伺服器後座表 + 移動準度 → recoil.json（先驗資料表）
+python3 -m tools.godot.export          # → client/assets/recoil/recoil.json
+python3 -m pytest -q tests/test_recoil_data.py    # 25 項契約（含 Python⇄Rust⇄GDScript）
+```
+
+- 19 把槍各有專屬 spray pattern（Vandal ≠ Phantom ≠ Guardian），前幾發直上、尾段有機
+- 準星半徑 = `SpreadEngine.spread_deg()` 的真值；蹲/靜步/空中/剛落地都會反映在準星與四角指示
+- 停火 → 後座依 `recover_rate` 回吐到 0；換彈 → 图案回到第 1 發（「首發最準」）
+- 全自動按住連射、連發槍自動打完整組（射速取自 bundle，伺服器同速限流）
+- 設定面板（`Esc`）可開「後座图案預覽」與「準星反映真實準度」
+
+細節、取捨與守門測試清單見 `docs/10_gunplay_feel.md`。
 
 ## Cloudflare Workers 部署（後端線上版）
 

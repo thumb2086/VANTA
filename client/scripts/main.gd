@@ -40,6 +40,12 @@ var _spike_state := ""
 var _connected_flag := false
 var _no_server_time := 0.0
 var _was_reloading := false
+## 手感三件套：後座/準度模型（res://assets/recoil/recoil.json ← tools.cli recoil）
+var recoil_model := RecoilModel.new()
+var _recoil_key := ""
+var _fire_held := false
+var _auto_next := 0.0
+var _burst_left := 0
 var _last_mouse := Vector2.ZERO
 var _footstep_timer := 0.0
 var _score_atk := 0
@@ -89,6 +95,8 @@ func _ready() -> void:
 	hud_layer.name = "HUDLayer"
 	add_child(hud_layer)
 	hud = HUD.new()
+	hud.name = "HUD"
+	hud.add_to_group("vanta_hud")
 	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
 	hud_layer.add_child(hud)
 	# 買槍商店
@@ -315,6 +323,10 @@ func _process(delta: float) -> void:
 		_pending.append({"seq": seq, "dir": inp["dir"], "walk": inp["walk"],
 			"crouch": inp["crouch"], "jump": inp["jump"]})
 		net.send_input(inp["dir"], inp["walk"], inp["crouch"], inp["jump"], inp["ads"])
+	# 手感：連發泵 + 後座恢復（槍身回正）+ 準星即時跟隨擴散圓
+	_pump_autofire()
+	recoil_model.update(_now(), delta)
+	_refresh_spread()
 	# 腳步聲
 	var speed := local.vel.length()
 	if local.on_ground and speed > 0.5:
@@ -420,6 +432,137 @@ func _read_input() -> Dictionary:
 	}
 
 
+func _now() -> float:
+	return float(Time.get_ticks_msec()) / 1000.0
+
+
+func _current_weapon_key() -> String:
+	return String(net.players.get(net.slot, {}).get("weapon", {}).get("key", "classic"))
+
+
+## 換槍 → 載入該槍的图案（金鑰＝伺服器武器 key）
+func _ensure_recoil_model(key: String) -> void:
+	if key == _recoil_key:
+		return
+	_recoil_key = key
+	var ok := recoil_model.setup(key)
+	if viewmodel != null:
+		# 有資料 → 視角由模型獨佔（避免兩套恢復曲線互相拉扯）
+		viewmodel.recoil_model_driven = bool(ok)
+
+
+## 開火：網路封包 + 視角模型 + 音效 + 命中特效（auto＝連發泵補的發）
+func _try_fire(_from_auto: bool) -> void:
+	if net.match_phase != 1:
+		return
+	var me: Dictionary = net.players.get(net.slot, {})
+	var is_knife: bool = int(me.get("weapon_slot", 1)) == 2
+	var wk: String = String(me.get("weapon", {}).get("key", "classic"))
+	_ensure_recoil_model(wk)
+	# 彈匣見底就别再發包（伺服器會自己觸發換彈）
+	if recoil_model.has_data and int(me.get("weapon", {}).get("mag", -1)) <= 0:
+		_fire_held = false
+		_burst_left = 0
+		return
+	net.send_shot(_yaw, _pitch)
+	var aim_dir: Vector3 = -cam.global_transform.basis.z
+	if is_knife:
+		viewmodel.play_knife()
+		var sfx_k := String(_skin_res.get("fx", {}).get("sound_key", ""))
+		audio_mgr.play_synth("knife_swing" if sfx_k == "" else sfx_k,
+			float(_skin_res.get("fx", {}).get("sound_pitch", 1.0)), -8.0)
+	elif not recoil_model.has_data:
+		# 缺 bundle（尚未跑工具鏈）→ 退回舊的近似行為，別讓準星變成死的
+		viewmodel.play_fire(randf_range(0.5, 1.0))
+		hud.spread_angle = minf(hud.spread_angle + 1.5, 5.0)
+	else:
+		# 這一發的真實偏移 → 槍身 kick（不再用 randf 猜）
+		var dv := recoil_model.fire(_now())
+		viewmodel.play_fire(dv.x)
+		viewmodel.set_recoil(recoil_model.pitch, recoil_model.yaw)
+		_refresh_spread()
+		# 合成槍聲：武器音色 + 皮膚招牌音色（工具鏈 SFX_REGISTRY）
+		var sfx: Dictionary = _skin_res.get("fx", {})
+		var pitch := float(sfx.get("sound_pitch", 1.0))
+		var gain := float(sfx.get("sound_gain_db", 0.0))
+		audio_mgr.play_synth(wk, pitch, -10.0 + gain * 0.5)
+		var skey := String(sfx.get("sound_key", ""))
+		if skey != "":
+			audio_mgr.play_synth(skey, pitch, gain - 4.0)
+	# 命中點（射線）→ 槍口/曳光/彈孔/命中特效全部放對位置
+	var impact := _shoot_impact(aim_dir)
+	if fx2 != null and not _skin_res.is_empty():
+		fx2.fire(viewmodel.muzzle_transform(), aim_dir, impact, _skin_res, is_knife)
+	else:
+		vfx_mgr.spawn("muzzle_flash", cam.global_position + aim_dir * 0.6)
+		vfx_mgr.spawn_tracer(cam.global_position + aim_dir * 0.8, aim_dir, 30.0)
+	if not is_knife and float(impact.get("dist", 99.0)) < 55.0 and fx2 != null:
+		fx2.play(skin_reg.impact_blueprint(_skin_res) if skin_reg != null else "impact_default", {
+			"impact": impact.get("point", Vector3.ZERO),
+			"normal": impact.get("normal", Vector3.UP),
+			"dir": aim_dir, "res": _skin_res,
+			"scale": float(_skin_res.get("fx", {}).get("muzzle_scale", 1.0)),
+		})
+	if screen_fx != null:
+		screen_fx.add_trauma(0.035 if not is_knife else 0.02)
+
+
+## 連發泵：automatic → 按住依射速補發；burst → 一次排程打完那組
+## 射速取自 bundle，伺服器的 next_fire_time 同速限流，因此不會超發
+func _pump_autofire() -> void:
+	if net.match_phase != 1:
+		_fire_held = false
+		_burst_left = 0
+		return
+	if _burst_left <= 0 and not _fire_held:
+		return
+	if _now() < _auto_next:
+		return
+	var me: Dictionary = net.players.get(net.slot, {})
+	if int(me.get("weapon_slot", 1)) == 2:
+		_burst_left = 0
+		return
+	_ensure_recoil_model(String(me.get("weapon", {}).get("key", "classic")))
+	if _burst_left > 0:
+		_burst_left -= 1
+	elif not recoil_model.automatic:
+		return   # 半自動：放開再按才算下一發
+	else:
+		pass
+	_try_fire(true)
+	_auto_next = _now() + recoil_model.fire_interval
+
+
+## 準星＝真的擴散圓（度 → HUD 直接照這個半徑畫）
+func _refresh_spread() -> void:
+	if hud == null or recoil_model == null:
+		return
+	if hud.recoil_model != recoil_model:
+		hud.recoil_model = recoil_model
+	var ratio := 0.0
+	if local != null and local.max_speed() > 0.0:
+		ratio = clampf(local.vel.length() / local.max_speed(), 0.0, 1.0)
+	var ads: bool = viewmodel != null and viewmodel._ads > 0.3
+	if not recoil_model.has_data:
+		hud.release_spread()
+		return
+	var air: bool = not local.on_ground
+	var deg: float = recoil_model.spread_deg(ratio, local.walking, local.crouching,
+			air, local.time_since_land, ads)
+	hud.set_spread_deg(deg)
+	# 移動狀態回饋（準度的來源）：剛落地 > 空中 > 蹲 > 靜步 > 站/跑
+	var st := 0
+	if local.time_since_land < recoil_model._land_time:
+		st = 4
+	elif air:
+		st = 3
+	elif local.crouching:
+		st = 2
+	elif local.walking and ratio > 0.01:
+		st = 1
+	hud.set_spread_state(st)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if _settings_open:
 		return
@@ -431,50 +574,23 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton and event.pressed:
 		match event.button_index:
 			MOUSE_BUTTON_LEFT:
-				if net.match_phase != 1:
-					return   # 買槍/結算階段不可開火（伺服器也不處理）
-				net.send_shot(_yaw, _pitch)
-				# 開火動畫：刀是揮砍，槍是後座
-				var is_knife: bool = net.players.get(net.slot, {}).get("weapon_slot", 1) == 2
-				var aim_dir: Vector3 = -cam.global_transform.basis.z
-				if is_knife:
-					viewmodel.play_knife()
-					var sfx_k := String(_skin_res.get("fx", {}).get("sound_key", ""))
-					audio_mgr.play_synth("knife_swing" if sfx_k == "" else sfx_k,
-						float(_skin_res.get("fx", {}).get("sound_pitch", 1.0)), -8.0)
-				else:
-					viewmodel.play_fire(randf_range(0.5, 1.0))
-					# 合成槍聲：武器音色 + 皮膚招牌音色（工具鏈 SFX_REGISTRY）
-					var wk2: String = net.players.get(net.slot, {}).get("weapon", {}).get("key", "classic")
-					var sfx: Dictionary = _skin_res.get("fx", {})
-					var pitch := float(sfx.get("sound_pitch", 1.0))
-					var gain := float(sfx.get("sound_gain_db", 0.0))
-					audio_mgr.play_synth(wk2, pitch, -10.0 + gain * 0.5)
-					var skey := String(sfx.get("sound_key", ""))
-					if skey != "":
-						audio_mgr.play_synth(skey, pitch, gain - 4.0)
-					hud.spread_angle = minf(hud.spread_angle + 1.5, 5.0)
-				# 命中點（射線）→ 槍口/曳光/彈孔/命中特效全部放對位置
-				var impact := _shoot_impact(aim_dir)
-				if fx2 != null and not _skin_res.is_empty():
-					fx2.fire(viewmodel.muzzle_transform(), aim_dir, impact, _skin_res, is_knife)
-				else:
-					vfx_mgr.spawn("muzzle_flash", cam.global_position + aim_dir * 0.6)
-					vfx_mgr.spawn_tracer(cam.global_position + aim_dir * 0.8, aim_dir, 30.0)
-				if not is_knife and float(impact.get("dist", 99.0)) < 55.0 and fx2 != null:
-					fx2.play(skin_reg.impact_blueprint(_skin_res) if skin_reg != null else "impact_default", {
-						"impact": impact.get("point", Vector3.ZERO),
-						"normal": impact.get("normal", Vector3.UP),
-						"dir": aim_dir, "res": _skin_res,
-						"scale": float(_skin_res.get("fx", {}).get("muzzle_scale", 1.0)),
-					})
-				if screen_fx != null:
-					screen_fx.add_trauma(0.035 if not is_knife else 0.02)
+				_fire_held = true
+				_ensure_recoil_model(_current_weapon_key())
+				_burst_left = 0
+				_try_fire(false)
+				# 連發武器（automatic）靠 _pump_autofire 續發；連發數（burst）在此排程
+				if recoil_model.has_data and not recoil_model.automatic \
+						and recoil_model.burst_count > 1:
+					_burst_left = recoil_model.burst_count - 1
+				_auto_next = _now() + recoil_model.fire_interval
 			MOUSE_BUTTON_RIGHT:
 				viewmodel.set_ads(true)
 	elif event is InputEventMouseButton and not event.pressed \
 			and event.button_index == MOUSE_BUTTON_RIGHT:
 		viewmodel.set_ads(false)
+	elif event is InputEventMouseButton and not event.pressed \
+			and event.button_index == MOUSE_BUTTON_LEFT:
+		_fire_held = false
 	elif event is InputEventKey and event.pressed:
 		match event.keycode:
 			KEY_1:
@@ -639,6 +755,9 @@ func _toggle_settings() -> void:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	else:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		# 立即套用新的準心／手感設定
+		if hud != null and hud.has_method("reload_crosshair_config"):
+			hud.call("reload_crosshair_config")
 		# 立即套用新的滑鼠靈敏度
 		if has_node("/root/VantaGlobal"):
 			_sens = float(get_node("/root/VantaGlobal").sensitivity) * 0.01
@@ -780,11 +899,24 @@ func _update_viewmodel(delta: float) -> void:
 	if reloading and not _was_reloading:
 		viewmodel.begin_reload_from_server()
 		audio_mgr.play("reload")
+	elif _was_reloading and not reloading:
+		# 與伺服器 weapon_state.update() 同步：換彈完成 → 图案從第 1 發重來
+		recoil_model.reset_pattern()
+		_refresh_spread()
+	var wk := String(me.get("weapon", {}).get("key", ""))
+	if wk != "" and wk != _recoil_key:
+		# 換槍 → 換图案，並把準星/視角歸零（不帶著上一把的後座開槍）
+		_ensure_recoil_model(wk)
+		recoil_model.hard_reset()
+		_refresh_spread()
 	_was_reloading = reloading
 	# 步態 bob + 伺服器換彈進度（精確驅動動畫/音效時序）
 	var speed: float = local.vel.length()
 	var rfrac: float = me.get("reload_frac", -1.0)
 	viewmodel.update(delta, speed, local.on_ground, _last_mouse, rfrac)
+	# 最後蓋上後座偏移：順序在 viewmodel.update 之後，才不會被它的動畫覆蓋
+	if recoil_model.has_data:
+		viewmodel.set_recoil(recoil_model.pitch, recoil_model.yaw)
 
 
 ## 武器槽位 → 武器 ID 對照

@@ -520,8 +520,17 @@ func set_ads(on: bool) -> void:
 	_ads_target = on
 
 
-func set_recoil(pitch_deg: float) -> void:
-	_recoil_rot.x = pitch_deg
+## 模型驅動：main 每幀塞進「與伺服器同一個」的累積偏移，視角不再自己 lerp 恢復
+var recoil_model_driven := false
+const RECOIL_VIS_SCALE := 0.22   # 後座度 → 視角度（17° 的彈匣噴完 ≈ 3.7°，看得見但不會暈）
+
+
+func set_recoil(pitch_deg: float, yaw_deg: float = 0.0) -> void:
+	# 數字來自 RecoilModel（= 伺服器图案）：看到的＝打出去的
+	_recoil_rot.x = clampf(pitch_deg * RECOIL_VIS_SCALE, 0.0, 6.0)
+	_recoil_rot.y = clampf(yaw_deg * RECOIL_VIS_SCALE * 1.4, -4.0, 4.0)
+	if recoil_model_driven:
+		_recoil_rot.z = 0.0
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -678,7 +687,9 @@ func update(dt: float, speed: float, on_ground: bool, mouse_delta: Vector2,
 
 	# Apply recoil (recovers over time)
 	_recoil_offset = _recoil_offset.lerp(Vector3.ZERO, 1.0 - exp(-_recoil_recovery_speed * dt))
-	_recoil_rot = _recoil_rot.lerp(Vector3.ZERO, 1.0 - exp(-_recoil_recovery_speed * dt))
+	if not recoil_model_driven:
+		# 只有「沒有模型」時才用本地近似恢復，否則會跟 RecoilModel 搶同一個值
+		_recoil_rot = _recoil_rot.lerp(Vector3.ZERO, 1.0 - exp(-_recoil_recovery_speed * dt))
 
 	# Final assembly
 	pos += Vector3(sway_x + mouse_sway_x, sway_y + mouse_sway_y, sway_z)

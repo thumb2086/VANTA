@@ -79,6 +79,10 @@ var crosshair_thickness := 2.0
 var crosshair_outline := false
 var crosshair_dot := true
 var crosshair_style := 0
+# 手感（recoil/spread 視覺化）：由 settings_menu 寫入、hud._load_crosshair_config 讀取
+var recoil_indicator := false            # 顯示該槍後座图案與目前累積偏移
+var crosshair_spread_linked := true     # 準星大小 = 伺服器真的擴散圓
+var crosshair_spread_scale := 8.0       # 1° → 像素
 var fov := 90
 
 # 輔助功能設定（由 settings_menu.gd 寫入）

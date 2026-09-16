@@ -66,6 +66,13 @@ var ability_max_cds := [10.0, 10.0, 0.0, 0.0]   # 最大冷卻（E 免費，X �
 # ──── 彈道散布 ────
 var spread_angle := 0.0  # 當前散布角度（度）
 var _spread_decay := 0.0 # 散布衰減計時
+# ──── 手感三件套（資料來源：res://assets/recoil/recoil.json）────
+var recoil_model: RecoilModel = null   # main 注入；有它準星就是「真的」擴散圓
+var spread_linked := true             # false → 回到舊的固定衰減行為
+var spread_locked := false            # 模型每幀推值時停用本地衰減
+var recoil_indicator := false         # 中央顯示该槍图案 + 目前累積偏移
+var spread_state := 0                 # 0 站/跑 1 靜步 2 蹲 3 空中 4 剛落地
+var _px_per_deg := 8.0               # 1° → 多少像素（設定面板可调）
 
 # ──── 準心自訂（從 VantaGlobal 載入）───
 var ch_color := Color(0.22, 1.0, 0.08)
@@ -107,6 +114,31 @@ var _hit_marker_crosshair := false
 func _ready() -> void:
 	set_process(true)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reload_crosshair_config()
+
+
+## 從 VantaGlobal 讀準心／手感設定（設定面板套用後會再呼叫一次）
+func reload_crosshair_config() -> void:
+	var g := get_node_or_null("/root/VantaGlobal")
+	if g == null:
+		return
+	ch_color = _g(g, "crosshair_color", ch_color)
+	ch_size = float(_g(g, "crosshair_size", ch_size))
+	ch_gap = float(_g(g, "crosshair_gap", ch_gap))
+	ch_thickness = float(_g(g, "crosshair_thickness", ch_thickness))
+	ch_outline = bool(_g(g, "crosshair_outline", ch_outline))
+	ch_dot = bool(_g(g, "crosshair_dot", ch_dot))
+	ch_style = int(_g(g, "crosshair_style", ch_style))
+	recoil_indicator = bool(_g(g, "recoil_indicator", recoil_indicator))
+	spread_linked = bool(_g(g, "crosshair_spread_linked", spread_linked))
+	_px_per_deg = float(_g(g, "crosshair_spread_scale", _px_per_deg))
+	queue_redraw()
+
+
+func _g(node: Node, prop: String, fallback: Variant) -> Variant:
+	if prop in node:
+		return node.get(prop)
+	return fallback
 
 
 func _process(delta: float) -> void:
@@ -128,8 +160,8 @@ func _process(delta: float) -> void:
 		_hit_marker_crosshair = false
 	if _spike_timer > 0.0:
 		_spike_timer = maxf(0.0, _spike_timer - delta)
-	# 彈道散布衰減
-	if spread_angle > 0.0:
+	# 彈道散布衰減（只有「非模型驅動」時才用本地指數衰減）
+	if spread_angle > 0.0 and (not spread_locked or not spread_linked):
 		spread_angle = maxf(0.0, spread_angle - delta * 15.0)  # 0.3 秒歸零
 	for i in range(feed.size() - 1, -1, -1):
 		feed[i]["t"] = float(feed[i]["t"]) + delta
@@ -197,6 +229,26 @@ func show_damage_direction(angle_rad: float) -> void:
 
 func show_hit_marker_crosshair() -> void:
 	_hit_marker_crosshair = true
+
+
+## 模型 → HUD：把「真的」擴散圓（度）交給準星
+func set_spread_deg(deg: float) -> void:
+	if not spread_linked:
+		spread_locked = false
+		return
+	spread_locked = true
+	spread_angle = clampf(rad_to_deg(deg), 0.0, 26.0)
+
+
+## 停用模型驅動（無 bundle／使用者關閉）→ 退回本地衰減
+func release_spread() -> void:
+	spread_locked = false
+
+
+func set_spread_state(state: int) -> void:
+	if spread_state != state:
+		spread_state = state
+		queue_redraw()
 	_hitmarker_timer = 0.15
 
 
@@ -238,8 +290,8 @@ func _draw() -> void:
 func _draw_crosshair(vp: Vector2, font: Font) -> void:
 	var cx := vp.x * 0.5
 	var cy := vp.y * 0.5
-	# 散布間距（射擊時擴大，停止後縮回）
-	var spread_px := spread_angle * 8.0
+	# 散布間距＝真實擴散圓（1° = _px_per_deg 像素，可在設定面板調整）
+	var spread_px := spread_angle * _px_per_deg
 	var gap := ch_gap + spread_px
 	var len := ch_size
 	var thick := ch_thickness
@@ -267,6 +319,14 @@ func _draw_crosshair(vp: Vector2, font: Font) -> void:
 		draw_line(Vector2(cx, cy + gap + 1), Vector2(cx, cy + gap + len + 1), ol, thick + 2)
 	if ch_style != 2 and ch_dot:
 		draw_circle(Vector2(cx, cy), 1.5, xh_color)
+	# 移動／準度狀態回饋：蹲=加成（綠框）、空中/剛落地=劣化（紅框）
+	match spread_state:
+		2:
+			_draw_state_brackets(cx, cy, gap + len + 8.0, Color(0.35, 1.0, 0.55, 0.55))
+		3:
+			_draw_state_brackets(cx, cy, gap + len + 8.0, Color(1.0, 0.30, 0.24, 0.75), true)
+		4:
+			_draw_state_brackets(cx, cy, gap + len + 12.0, Color(1.0, 0.55, 0.25, 0.6), true)
 	# 散布範圍指示（四角小點）
 	if spread_px > 2.0:
 		var dd := gap + len + 4.0
@@ -275,6 +335,9 @@ func _draw_crosshair(vp: Vector2, font: Font) -> void:
 		draw_circle(Vector2(cx + dd, cy), ds, Color(xh_color.r, xh_color.g, xh_color.b, 0.5))
 		draw_circle(Vector2(cx, cy - dd), ds, Color(xh_color.r, xh_color.g, xh_color.b, 0.5))
 		draw_circle(Vector2(cx, cy + dd), ds, Color(xh_color.r, xh_color.g, xh_color.b, 0.5))
+	# 後座图案預覽（練習用；預設關閉）
+	if recoil_indicator:
+		_draw_recoil_preview(cx, cy)
 	# 擊殺閃爍（X）
 	if _killflash_timer > 0.0:
 		var u := _killflash_timer / 0.6
@@ -283,6 +346,51 @@ func _draw_crosshair(vp: Vector2, font: Font) -> void:
 		draw_line(Vector2(cx - s, cy - s), Vector2(cx + s, cy + s), _killflash_color, 5.0)
 		draw_line(Vector2(cx + s, cy - s), Vector2(cx - s, cy + s), _killflash_color, 5.0)
 
+
+func _draw_state_brackets(cx: float, cy: float, r: float, col: Color,
+			inward: bool = false) -> void:
+	## 四角括號：inward=true 時朝內（表示「不準」），否則朝外（表示「更準」）
+	var d := -1.0 if inward else 1.0
+	var seg := 6.0
+	for sx in [-1.0, 1.0]:
+		for sy in [-1.0, 1.0]:
+			var p0 := Vector2(cx + sx * r, cy + sy * r)
+			draw_line(p0, p0 + Vector2(sx * seg * d, 0.0), col, 2.0)
+			draw_line(p0, p0 + Vector2(0.0, sy * seg * d), col, 2.0)
+
+
+func _draw_recoil_preview(cx: float, cy: float) -> void:
+	## 把該槍的图案畫在準星上：已打出的發＝實心點，整串花紋＝淡線，
+	## 目前累積偏移＝亮點（含隨機 yaw），保護彈期＝綠色光圈。
+	if recoil_model == null or not recoil_model.has_data:
+		return
+	var px := _px_per_deg
+	var total := recoil_model.pattern_length()
+	if total <= 0:
+		return
+	var fired := clampi(recoil_model.bullet_index, 0, total)
+	var prev := Vector2(cx, cy)
+	for i in range(total):
+		var off := recoil_model.pattern_point(i)
+		var pos := Vector2(cx - off.x * px, cy - off.y * px)
+		var played := i < fired
+		# 已打出的那幾發亮、往後的花紋淡（預習用）；第 11 發之後淡到快看不见
+		var a := 0.16
+		if played:
+			a = clampf(0.85 - float(fired - i - 1) * 0.07, 0.12, 0.85)
+		draw_circle(pos, (1.7 if played else 1.1) + float(mini(i, 8)) * 0.12,
+				Color(0.55, 0.95, 1.0, a))
+		if i > 0:
+			draw_line(prev, pos, Color(0.55, 0.95, 1.0, 0.22 if played else 0.08), 1.0)
+		prev = pos
+	var cur := Vector2(cx - recoil_model.yaw * px, cy - recoil_model.pitch * px)
+	draw_line(Vector2(cx, cy), cur, Color(1.0, 0.5, 0.35, 0.55), 1.5)
+	draw_circle(cur, 2.6, Color(1.0, 0.82, 0.4, 0.95))
+	var left := recoil_model.protected_left()
+	if left > 0:
+		draw_circle(Vector2(cx, cy), 4.0 + float(left) * 2.2, Color(0.4, 1.0, 0.6, 0.22))
+		draw_arc(Vector2(cx, cy), 4.0 + float(left) * 2.2, 0.0, TAU, 24,
+				Color(0.4, 1.0, 0.6, 0.5), 1.0)
 
 # ──── 狙擊鏡 overlay ─────────────────────
 func _draw_kill_banner(vp: Vector2, font: Font) -> void:
@@ -865,3 +973,4 @@ func _draw_weapon_silhouette(vp: Vector2, font: Font) -> void:
 	else:
 		draw_rect(Rect2(x, y, 50, 8), col)
 		draw_rect(Rect2(x + 42, y - 2, 14, 4), col)
+

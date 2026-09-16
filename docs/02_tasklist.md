@@ -137,3 +137,24 @@
 - [x] 總測試：**235 個全綠**（含 3 個 parity 測試）
 - [x] 效能冒煙：10 玩家 × 128Hz 完整對戰 + AI → 31x 即時（純 Python；
   正式版熱路徑移植 Rust 可達更高）
+
+## 追加（2026-09）：track 1「手感三件套」
+- [x] **每槍獨立 spray pattern**：`RecoilPattern` 由 6 套 class 表擴充為 **19 把槍專屬**
+  （+4 套 class 退回用，共 23 筆）；設計原則寫進碼表註解並由 `tools/weapons/recoil_bundle.py::verify()`
+  執行（峰值在前 40%、保護彈不超過图案長度、全自動至少 1/4 彈匣、兩槍不得同形）
+- [x] **修復後座永不恢復的實作 bug**：`WeaponState.aim_*_offset` 舊為 `+= p` 只增不減 →
+  改取 `RecoilController` 累積值，停火即回吐；換彈完成 `reset_pattern()` 讓图案回到第 1 發
+  （**Python 與 `rust/parity/src/weapon_state.rs` 同步修改**，golden 序列不受影響）
+- [x] **手感資料鏈**：`tools.cli recoil` → `tools/assets/recoil/recoil.json` →
+  `tools.godot.export`（新增 `recoil` 類別）→ `client/assets/recoil/`；協定 0 變動
+- [x] **客戶端鏡像層** `client/scripts/recoil_model.gd`：GDScript 重放
+  `RecoilController` + `SpreadEngine` + `MovementErrorEngine`；驅動 ①`HUD.set_spread_deg`
+  準星＝真實擴散圓（蹲/靜步/空中/剛落地四種狀態回饋）②`WeaponViewModel.set_recoil(pitch, yaw)`
+  槍身 kick（模型驅動時停用視角本地 lerp，避免雙重恢復）**不碰相機 _pitch/_yaw**（會 double-count）
+- [x] **自動/連點射速**：`_pump_autofire()` 依 bundle 的 `automatic/burst/fire_rate_rps` 補發
+- [x] 測試：`tests/test_recoil_data.py` **25 項**（含 `rust/parity` VANDAL 常數漂移守門、
+  GDScript 必讀每個 bundle key、6 把槍 × 4 種狀態逐位比對 `SpreadEngine`）
+  ＋ Godot 端 `client/tests/test_all.gd::_run_recoil_bundle_check()`
+- [x] 文件：`docs/10_gunplay_feel.md`
+- [ ] 尚未做：每角第 3/4 顆技能與終點球充能（需先定 snapshot/event 協定改法）、智慧 ping、
+  訓練場首發準度計分

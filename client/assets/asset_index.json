@@ -155,5 +155,8 @@
     "res://assets/vfx/blueprints.json",
     "res://assets/vfx/decals.json",
     "res://assets/vfx/sprites.json"
+  ],
+  "recoil": [
+    "res://assets/recoil/recoil.json"
   ]
 }

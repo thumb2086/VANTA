@@ -34,9 +34,12 @@ class WeaponState:
         if not self.can_fire(now):
             return False
         self.mag -= 1
-        p, y = self.recoil.fire(now)
-        self.aim_pitch_offset += p
-        self.aim_yaw_offset += y
+        self.recoil.fire(now)
+        # 準線偏移 = 後座控制器的「累積值」（會隨停火恢復）。
+        # 舊寫法是 `+= p` 只增不減：壓完整個彈匣後準線永久停在上緣，之後每一發
+        # 都跟著歪，而且不會隨時間回來——那會把「壓槍→放開recover」的手感整個抹平。
+        self.aim_pitch_offset = self.recoil.pitch
+        self.aim_yaw_offset = self.recoil.yaw
         # Odin 旋轉加速：持續開火時射速提升（12→15.6 rps）
         fire_rate = self.stats.fire_rate_rps
         if self.stats.key == "odin":
@@ -63,6 +66,9 @@ class WeaponState:
 
     def update(self, now: float, dt: float) -> None:
         self.recoil.update(now, dt)
+        # 恢復要即時反映到準線（entities 每發都讀這兩個欄位）
+        self.aim_pitch_offset = self.recoil.pitch
+        self.aim_yaw_offset = self.recoil.yaw
         if self.reloading:
             self.reload_progress += dt
             if self.reload_progress >= self.stats.reload_time:
@@ -71,6 +77,8 @@ class WeaponState:
                 self.mag += take
                 self.reserve -= take
                 self.reloading = False
+                # 換彈完成 → 图案回到第 1 發（「首發最準」是點射流派的根基）
+                self.recoil.reset_pattern()
 
     def reset_ammo(self) -> None:
         self.mag = self.stats.mag_size
