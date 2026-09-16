@@ -582,17 +582,12 @@ class GameServer:
         if self.transport is None or not self.sessions:
             return
         w = self.world
-        cooldowns = []
-        for p in w.players:
-            cds = p.abilities.snapshot()
-            # 取每個技能的冷卻（最多 4 個）
-            slot_cds = [0.0] * 4
-            for i, s in enumerate(cds[:4]):
-                slot_cds[i] = s.get("cooldown", 0.0)
-            cooldowns.append(tuple(slot_cds))
+        # 每人 8 bytes：4 冷卻 + 終點球點數/需求 + 使用次數 + 旗標
+        states = [p.abilities.wire_tuple() for p in w.players]
+        states += [(0,) * 8] * (MAX_SLOTS - len(states))
         pkt = AbilityStatePacket(
             server_tick=self.tick,
-            cooldowns=tuple(cooldowns),
+            states=tuple(states),
         )
         payload = pkt.encode()
         for sess in self.sessions.values():

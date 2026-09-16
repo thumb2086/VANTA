@@ -6,11 +6,12 @@
   "role": "initiator",
   "role_label": "先鋒",
   "desc": "情報壓制與開戰的發動機",
-  "bio": "情報壓制與開戰的發動機。信奉先發制人。代號「Blitzel」，隸屬 NIGHTFALL。",
+  "bio": "情報壓制與開戰的發動機。沉默寡言但戰術精準。代號「Blitzel」，隸屬 NIGHTFALL。",
   "kit": [
     "flash",
     "frag",
-    "stim"
+    "stim",
+    "electric_beam"
   ],
   "stats": {
     "hp": 100,
@@ -24,5 +25,16 @@
     "bg1": "#3b1638",
     "bg2": "#0a1e0b"
   },
-  "seed": 131
+  "seed": 131,
+  "slots": [
+    "C",
+    "Q",
+    "E",
+    "X"
+  ],
+  "ultimate": {
+    "key": "electric_beam",
+    "label": "奔流光矛",
+    "cost": 7
+  }
 }

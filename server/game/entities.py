@@ -41,6 +41,12 @@ from server.game.status import (
 from server.game.weapon_state import WeaponState
 from server.game.weapons import WEAPONS, WeaponStats, weapon
 
+# 終點球充能（《特戰英豪》同款：擊殺 2、助攻/安放/拆除 1、敗方每人 1，上限 8）
+ULT_POINTS_KILL = 2
+ULT_POINTS_ASSIST = 1
+ULT_POINTS_SPIKE = 1
+ULT_POINTS_ROUND_LOSS = 1
+
 __all__ = ["World", "Player", "PlayerMoveState", "WeaponState", "DamageReceipt"]
 
 _MOVEMENT_ERROR = MovementErrorEngine()
@@ -244,6 +250,7 @@ class Player:
             "credits": self.economy.credits, "kills": self.kills, "deaths": self.deaths,
             "agent": self.agent_key, "weapon": self.weapon.snapshot(),
             "abilities": self.abilities.snapshot(),
+            "ult": self.abilities.ult_snapshot(),
         }
 
 
@@ -688,6 +695,20 @@ class World:
         aim = dir_from_yaw_pitch(yaw_deg, pitch_deg)
         return p.abilities.cast(index, self, slot, aim)
 
+    def award_ult(self, slot: int, points: int, reason: str = "") -> int:
+        """發給某玩家終点球充能；回傳實際增加量。上限 `ULT_MAX_POINTS`（跨回合保留）。
+
+        客戶端的充能條／就緒提示讀 ABILITY_STATE 封包的**邊沿**（ready: false→true），
+        因此這裡不新增協定事件——協定變動愈少，可作弊面愈小。
+        """
+        if not (0 <= slot < len(self.players)) or points <= 0:
+            return 0
+        ab = self.players[slot].abilities
+        gained = ab.add_ult_points(points)
+        if gained and ab.ult_ready():
+            self.event_log.append(f"ult_ready: slot{slot} ({reason})")
+        return gained
+
     def spawn_projectile(self, proj: Projectile) -> None:
         self.projectiles.append(proj)
 
@@ -803,6 +824,10 @@ class World:
             if best >= 0:
                 self.players[best].assists += 1
                 self.event_log.append(f"assist: slot{best} on slot{victim_slot} (killer slot{killer_slot})")
+            # 終點球充能（權威）：擊殺 +2、助攻 +1
+            self.award_ult(killer_slot, ULT_POINTS_KILL, "kill")
+            if best >= 0:
+                self.award_ult(best, ULT_POINTS_ASSIST, "assist")
         self.event_log.append(f"kill: slot{victim_slot} by slot{killer_slot} ({weapon_key})")
         # 每日任務：kill/assist 累進
         try:

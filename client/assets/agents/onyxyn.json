@@ -10,7 +10,8 @@
   "kit": [
     "heal",
     "trap",
-    "frag"
+    "frag",
+    "earthquake"
   ],
   "stats": {
     "hp": 100,
@@ -24,5 +25,16 @@
     "bg1": "#163b27",
     "bg2": "#1e0a15"
   },
-  "seed": 286
+  "seed": 286,
+  "slots": [
+    "C",
+    "Q",
+    "E",
+    "X"
+  ],
+  "ultimate": {
+    "key": "earthquake",
+    "label": "震地",
+    "cost": 8
+  }
 }

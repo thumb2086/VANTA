@@ -66,7 +66,7 @@ def test_expected_scale():
     assert len(PRESETS) == 94
     assert len(SPRITES) == 18
     assert len(DECALS) == 14
-    assert len(BLUEPRINTS) == 58
+    assert len(BLUEPRINTS) == 60   # +ult_ready / ult_cast（終點球特效）
 
 
 def test_every_tier_defined():

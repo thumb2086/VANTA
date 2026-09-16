@@ -1,0 +1,40 @@
+{
+  "key": "vexara",
+  "codename": "Vexara",
+  "name": "Kai Tanaka",
+  "faction": "NIGHTFALL",
+  "role": "duelist",
+  "role_label": "決鬥者",
+  "desc": "先鋒突破，單兵作戰的尖刀",
+  "bio": "先鋒突破，單兵作戰的尖刀。戰場上從不退縮。代號「Vexara」，隸屬 NIGHTFALL。",
+  "kit": [
+    "flash",
+    "stim",
+    "frag",
+    "thrown_knife"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 1.03,
+    "shield_pref": "light",
+    "role_glyph": "flash"
+  },
+  "colors": {
+    "primary": "#e26a36",
+    "accent": "#e7f04b",
+    "bg1": "#3b2116",
+    "bg2": "#0a181e"
+  },
+  "seed": 472,
+  "slots": [
+    "C",
+    "Q",
+    "E",
+    "X"
+  ],
+  "ultimate": {
+    "key": "thrown_knife",
+    "label": "刃暴",
+    "cost": 8
+  }
+}

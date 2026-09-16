@@ -1,0 +1,40 @@
+{
+  "key": "novayn",
+  "codename": "Novayn",
+  "name": "Sorin Tanaka",
+  "faction": "NIGHTFALL",
+  "role": "duelist",
+  "role_label": "決鬥者",
+  "desc": "先鋒突破，單兵作戰的尖刀",
+  "bio": "先鋒突破，單兵作戰的尖刀。以快狠準聞名。代號「Novayn」，隸屬 NIGHTFALL。",
+  "kit": [
+    "flash",
+    "stim",
+    "frag",
+    "thrown_knife"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 1.03,
+    "shield_pref": "light",
+    "role_glyph": "flash"
+  },
+  "colors": {
+    "primary": "#b5e236",
+    "accent": "#4bf04d",
+    "bg1": "#313b16",
+    "bg2": "#0f0a1e"
+  },
+  "seed": 503,
+  "slots": [
+    "C",
+    "Q",
+    "E",
+    "X"
+  ],
+  "ultimate": {
+    "key": "thrown_knife",
+    "label": "刃暴",
+    "cost": 8
+  }
+}

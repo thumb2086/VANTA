@@ -61,7 +61,14 @@ var is_scoped := false    # 是否狙擊槍（有瞄準鏡）
 
 # ──── 技能冷卻 ────
 var ability_cooldowns := [0.0, 0.0, 0.0, 0.0]  # C/Q/E/X 冷卻秒數
-var ability_max_cds := [10.0, 10.0, 0.0, 0.0]   # 最大冷卻（E 免費，X 充能）
+var ability_max_cds := [10.0, 10.0, 0.0, 0.0]   # 最大冷卻（由权威封包的第一個觀測值推得）
+var ability_charges := [1, 1, 1, 1]             # 各槽剩餘使用次數（伺服器權威）
+# 終點球（X 槽）：points/cost 由 0x07 ABILITY_STATE 每秒推一次
+var ult_points := 0
+var ult_cost := 0
+var ult_ready := false
+var ult_blocked := false
+var _ult_pulse := 0.0
 
 # ──── 彈道散布 ────
 var spread_angle := 0.0  # 當前散布角度（度）
@@ -160,6 +167,9 @@ func _process(delta: float) -> void:
 		_hit_marker_crosshair = false
 	if _spike_timer > 0.0:
 		_spike_timer = maxf(0.0, _spike_timer - delta)
+	# 終點球就緒：呼吸光（只在本機做視覺，數值仍是伺服器的）
+	if ult_ready:
+		_ult_pulse = fmod(_ult_pulse + delta * 2.6, TAU)
 	# 彈道散布衰減（只有「非模型驅動」時才用本地指數衰減）
 	if spread_angle > 0.0 and (not spread_locked or not spread_linked):
 		spread_angle = maxf(0.0, spread_angle - delta * 15.0)  # 0.3 秒歸零
@@ -243,6 +253,16 @@ func set_spread_deg(deg: float) -> void:
 ## 停用模型驅動（無 bundle／使用者關閉）→ 退回本地衰減
 func release_spread() -> void:
 	spread_locked = false
+
+
+## 权威終點球狀態（main 從 0x07 封包同步過來）
+func set_ult(points: int, cost: int, ready: bool, blocked: bool = false) -> void:
+	ult_points = points
+	ult_cost = cost
+	ult_blocked = blocked
+	if ult_ready != ready:
+		ult_ready = ready
+		queue_redraw()
 
 
 func set_spread_state(state: int) -> void:
@@ -815,10 +835,36 @@ func _draw_ability_bar(vp: Vector2, font: Font) -> void:
 			var cd_w := font.get_string_size(cd_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
 			draw_string(font, Vector2(cx2 - cd_w * 0.5, y + slot_h - 4), cd_str,
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 13, COL_AMMO_LOW)
+		elif i == 3 and ult_cost > 0:
+			# 終點球：畫 n 格充能（而不是「OK」），滿了就呼吸發光
+			var pw := 8.0
+			var n := clampi(ult_cost, 1, 12)
+			var row_w := pw * float(n) + 2.0 * float(n - 1)
+			var px0 := cx2 - row_w * 0.5
+			for k in range(n):
+				var filled: bool = k < ult_points
+				var pc := Color(1.0, 0.78, 0.28) if filled else Color(1, 1, 1, 0.16)
+				draw_rect(Rect2(px0 + float(k) * (pw + 2.0), y + slot_h - 11.0, pw, 6.0), pc)
+			if ult_ready:
+				var glow := 0.45 + 0.35 * sin(_ult_pulse)
+				draw_rect(Rect2(sx - 2.0, y - 2.0, slot_w + 4.0, slot_h + 4.0),
+						Color(1.0, 0.82, 0.35, glow), false, 2.0)
 		else:
 			var ready_w := font.get_string_size("OK", HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
 			draw_string(font, Vector2(cx2 - ready_w * 0.5, y + slot_h - 4), "OK",
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(col.r, col.g, col.b, 0.6))
+		# 使用次數點點（終點球槽不畫：它上面已有充能格）
+		if not (i == 3 and ult_cost > 0):
+			var left := clampi(int(ability_charges[i]) if ability_charges.size() > i else 1, 0, 3)
+			if left > 0:
+				for k in range(left):
+					draw_circle(Vector2(cx2 - 8.0 + float(k) * 8.0, y + 8.0), 2.4,
+							Color(col.r, col.g, col.b, 0.9))
+			elif not on_cd:
+				draw_rect(Rect2(sx, y, slot_w, slot_h), Color(1.0, 0.35, 0.3, 0.14))
+	# 被 KAY/O 壓制：整條技能蓋上一層紫
+	if ult_blocked:
+		draw_rect(Rect2(sx, y, slot_w, slot_h), Color(0.55, 0.25, 0.85, 0.28))
 
 
 # ──── 隊伍構成（頂部，比分下方小圖示）

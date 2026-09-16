@@ -67,10 +67,34 @@ def test_validate_catches_bad_role_and_missing():
 
 
 def test_kit_contains_known_abilities():
+    """四槽契約：C/Q/E 取自基礎池，X 必須是終點球池的成員（可被充能門控）。"""
+    from tools.agents.generator import ULT_POOL
+
+    basics = ("flash", "frag", "smoke", "trap", "stim", "heal")
     for seed in range(1, 20):
         a = generate_agent(seed=seed)
-        assert len(a.kit) >= 2
-        assert all(name in ("flash", "frag", "smoke", "trap", "stim", "heal") for name in a.kit)
+        assert len(a.kit) == 4, f"seed {seed}: {a.kit}"
+        assert all(name in basics for name in a.kit[:3])
+        assert a.kit[3] in ULT_POOL and a.ult == a.kit[3]
+        assert 6 <= a.ult_cost <= 9
+
+
+def test_exported_dict_carries_slots_and_ultimate():
+    """匯出的 JSON 要帶 slots/ultimate——客戶端技能條與兵工廠看的是這個。"""
+    from tools.agents.generator import ULT_POOL
+
+    d = generate_agent(seed=11).to_dict()
+    assert d["slots"] == ["C", "Q", "E", "X"]
+    assert d["ultimate"]["key"] in ULT_POOL
+    assert d["ultimate"]["cost"] == ULT_POOL[d["ultimate"]["key"]]["cost"]
+    assert validate_agent(d) == []
+    # 缺終點球／槽位不對的資料要擋下來
+    d2 = generate_agent(seed=12).to_dict()
+    d2["kit"] = d2["kit"][:3]
+    assert validate_agent(d2) != []
+    d3 = generate_agent(seed=13).to_dict()
+    d3["ultimate"]["cost"] = 0
+    assert validate_agent(d3) != []
 
 
 # --------------------------------------------------------------------- #

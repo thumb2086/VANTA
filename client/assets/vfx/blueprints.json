@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "count": 58,
+  "count": 60,
   "blueprints": [
     {
       "id": "ability_dash",
@@ -2758,6 +2758,68 @@
       "audio": {
         "sfx": "spike_planted",
         "pitch": 1.0
+      }
+    },
+    {
+      "id": "ult_cast",
+      "kind": "common",
+      "style": "default",
+      "label": "終點球施放",
+      "duration": 0.95,
+      "budget": 3,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "spike_shockwave",
+          "at": "world"
+        },
+        {
+          "type": "particles",
+          "preset": "shield_ring",
+          "at": "world",
+          "scale": 1.6
+        },
+        {
+          "type": "light",
+          "at": "world",
+          "color": "#ff8a3c",
+          "energy": 16.0,
+          "range": 22.0,
+          "ttl": 0.5
+        }
+      ],
+      "audio": {
+        "sfx": "ult_cast",
+        "pitch": 1.0,
+        "gain_db": -2.0
+      }
+    },
+    {
+      "id": "ult_ready",
+      "kind": "common",
+      "style": "default",
+      "label": "終點球就緒",
+      "duration": 1.15,
+      "budget": 2,
+      "layers": [
+        {
+          "type": "particles",
+          "preset": "shield_ring",
+          "at": "world"
+        },
+        {
+          "type": "light",
+          "at": "world",
+          "color": "#ffce54",
+          "energy": 6.0,
+          "range": 9.0,
+          "ttl": 1.1
+        }
+      ],
+      "audio": {
+        "sfx": "ult_ready_chime",
+        "pitch": 1.0,
+        "gain_db": -3.0
       }
     }
   ]

@@ -1,0 +1,40 @@
+{
+  "key": "umbraix",
+  "codename": "Umbraix",
+  "name": "Tomas Silva",
+  "faction": "ASGARD-9",
+  "role": "initiator",
+  "role_label": "先鋒",
+  "desc": "情報壓制與開戰的發動機",
+  "bio": "情報壓制與開戰的發動機。信奉先發制人。代號「Umbraix」，隸屬 ASGARD-9。",
+  "kit": [
+    "flash",
+    "stim",
+    "trap",
+    "hunter_fury"
+  ],
+  "stats": {
+    "hp": 100,
+    "speed_mult": 1.0,
+    "shield_pref": "light",
+    "role_glyph": "spark"
+  },
+  "colors": {
+    "primary": "#e2b336",
+    "accent": "#a1f04b",
+    "bg1": "#3b3116",
+    "bg2": "#0a0f1e"
+  },
+  "seed": 348,
+  "slots": [
+    "C",
+    "Q",
+    "E",
+    "X"
+  ],
+  "ultimate": {
+    "key": "hunter_fury",
+    "label": "猎魂之怒",
+    "cost": 7
+  }
+}

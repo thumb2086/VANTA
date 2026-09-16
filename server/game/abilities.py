@@ -35,6 +35,9 @@ class IAbility(ABC):
     name: str = "ability"
     charges: int = 1
     cooldown: float = 0.0
+    # 終點球（X 槽）：is_ultimate 的招不靠 charges/cooldown，而是靠「充能點數」開起來
+    is_ultimate: bool = False
+    ult_cost: int = 8
 
     @abstractmethod
     def cast(self, world, caster_slot: int, aim_dir: Vec3) -> None:
@@ -411,6 +414,7 @@ class BeamUltimateAbility(IAbility):
 class ThrownKnifeAbility(IAbility):
     """投擲飛刀終極技能：投出多把飛刀，每把造成傷害（Jett Blade Storm）。"""
     name: str = "blade_storm"
+    is_ultimate: bool = True
     charges: int = 1
     cooldown: float = 0.0  # 終極技能
     knife_count: int = 5
@@ -470,6 +474,7 @@ class FlameWallAbility(IAbility):
 class OrbitalStrikeAbility(IAbility):
     """軌道打擊終極技能：在指定區域延遲後造成範圍致死傷害（Brimstone Orbital Strike）。"""
     name: str = "orbital_strike"
+    is_ultimate: bool = True
     charges: int = 1
     cooldown: float = 0.0
     radius: float = 5.0
@@ -585,6 +590,7 @@ class ElectricWallAbility(IAbility):
 class ElectricBeamUltAbility(IAbility):
     """閃電光束終極技能：沿前方發射閃電光束，持續傷害（Neon Overdrive）。"""
     name: str = "lightning_ult"
+    is_ultimate: bool = True
     charges: int = 1
     cooldown: float = 0.0
     damage: float = 30.0
@@ -613,6 +619,7 @@ class ElectricBeamUltAbility(IAbility):
 class InvisibilityAbility(IAbility):
     """隱形傳送：短暫隱形 + 傳送到前方位置（Yoru Dimensional Drift 終極）。"""
     name: str = "invis_teleport"
+    is_ultimate: bool = True
     charges: int = 1
     cooldown: float = 0.0
     duration: float = 8.0
@@ -754,6 +761,7 @@ class BarrierWallAbility(IAbility):
 class ResurrectionAbility(IAbility):
     """復活終極技能：復活一名已死亡的隊友至施法者旁（Sage Resurrection）。"""
     name: str = "resurrection"
+    is_ultimate: bool = True
     charges: int = 1
     cooldown: float = 0.0
 
@@ -815,6 +823,7 @@ class ToxicScreenAbility(IAbility):
 class ViperPitAbility(IAbility):
     """毒蛇之穴終極：在施法者周圍生成大範圍毒霧區域（Viper Viper's Pit）。"""
     name: str = "viper_pit"
+    is_ultimate: bool = True
     charges: int = 1
     cooldown: float = 0.0
     radius: float = 8.0
@@ -915,6 +924,7 @@ class SkySmokeAbility(IAbility):
 class EarthquakeAbility(IAbility):
     """地震終極技能：沿前方扇形區域造成範圍暈眩+傷害，穿透牆壁（Breach Rolling Earthquake）。"""
     name: str = "earthquake"
+    is_ultimate: bool = True
     charges: int = 1
     cooldown: float = 0.0
     damage: float = 50.0
@@ -999,6 +1009,7 @@ class AftershockAbility(IAbility):
 class NULLCmdAbility(IAbility):
     """NULL/cmd 終極：大範圍技能封鎖，持續時間內敵方無法使用技能（KAY/O NULL/cmd）。"""
     name: str = "null_cmd"
+    is_ultimate: bool = True
     charges: int = 1
     cooldown: float = 0.0
     radius: float = 12.0
@@ -1040,6 +1051,7 @@ class FlashpointAbility(IAbility):
 class HunterFuryAbility(IAbility):
     """獵手之怒終極：連續三道穿透光束（Sova Hunter's Fury）。"""
     name: str = "hunter_fury"
+    is_ultimate: bool = True
     charges: int = 3
     cooldown: float = 0.0
     damage: float = 80.0
@@ -1088,17 +1100,70 @@ class AbilitySlot:
             self.cooldown_left = max(0.0, self.cooldown_left - dt)
 
 
+ULT_MAX_POINTS = 8   # 上限：可跨回合累積（《特戰英豪》同規則）
+ABILITY_WIRE_BYTES = 8   # 0x07 ABILITY_STATE 每人 8 bytes（server/netcode/protocol.py 同值）
+
+
 class AbilitySystem:
-    """每位玩家的技能槽集合（charges/cooldown 由伺服器權威管理）。"""
+    """每位玩家的技能槽集合（charges/cooldown/終點球充能由伺服器權威管理）。
+
+    充能來源（`World.award_ult`）：擊殺 +2、助攻 +1、安放 +1、拆除 +1、敗方每人 +1。
+    未標 `is_ultimate` 的招（通用原型/AI 用的 archetype）不受充能限制，避免動到平衡。
+    """
 
     def __init__(self, defs: list[IAbility]):
         self.slots = [AbilitySlot(d, d.charges) for d in defs]
+        self.ult_points = 0
+        self._ult_idx = next((i for i, d in enumerate(defs) if d.is_ultimate), -1)
+        self._sync_ult_slot()
+
+    # ---- 終點球 ---- #
+    @property
+    def ult_index(self) -> int:
+        return self._ult_idx
+
+    @property
+    def ult_cost(self) -> int:
+        return self.slots[self._ult_idx].ability.ult_cost if self._ult_idx >= 0 else 0
+
+    def ult_ready(self) -> bool:
+        return self._ult_idx >= 0 and self.ult_points >= self.ult_cost
+
+    def add_ult_points(self, n: int) -> int:
+        """回傳實際增加的點數（到上限就少加）。"""
+        if self._ult_idx < 0 or n <= 0:
+            return 0
+        before = self.ult_points
+        self.ult_points = min(ULT_MAX_POINTS, self.ult_points + n)
+        self._sync_ult_slot()
+        return self.ult_points - before
+
+    def _sync_ult_slot(self) -> None:
+        if self._ult_idx < 0:
+            return
+        ready = self.ult_points >= self.ult_cost
+        slot = self.slots[self._ult_idx]
+        slot.charges_left = 1 if ready else 0
+        if ready:
+            slot.cooldown_left = 0.0
+
+    def _spend_ult(self) -> None:
+        if self._ult_idx < 0:
+            return
+        self.ult_points = 0          # 用完歸零（不保留溢充）
+        self.slots[self._ult_idx].charges_left = 0
 
     def cast(self, index: int, world, caster_slot: int, aim_dir: Vec3) -> bool:
         if not (0 <= index < len(self.slots)):
             return False
         # 技能封鎖檢查（KAY/O suppression）
         if not world.players[caster_slot].status.can_use_ability:
+            return False
+        # 統一閘門：連 charges/cooldown（終點球的「能不能放」也走這裡）。
+        # 舊版只在 `AbilitySlot.cast()` 內檢查，於是你可繞過的 enhanced dispatch
+        # （jett/sage/brimstone 的強化技）根本不看使用次數 → 可無限施放。
+        slot = self.slots[index]
+        if not slot.can_cast():
             return False
         # Try enhanced dispatch first
         agent_key = world.players[caster_slot].agent_key
@@ -1108,10 +1173,15 @@ class AbilitySystem:
                 fn(world, caster_slot, aim_dir)
                 self.slots[index].charges_left -= 1
                 self.slots[index].cooldown_left = self.slots[index].ability.cooldown
+                if index == self._ult_idx:
+                    self._spend_ult()
                 return True
             except Exception:
                 pass  # Fall through to basic cast
-        return self.slots[index].cast(world, caster_slot, aim_dir)
+        ok = self.slots[index].cast(world, caster_slot, aim_dir)
+        if ok and index == self._ult_idx:
+            self._spend_ult()
+        return ok
 
     def update(self, dt: float) -> None:
         for s in self.slots:
@@ -1122,12 +1192,40 @@ class AbilitySystem:
         for s in self.slots:
             s.charges_left = s.ability.charges
             s.cooldown_left = 0.0
+        if self._ult_idx >= 0:
+            # 充能制技能：refill 視同「直接充滿」
+            self.ult_points = max(self.ult_points, self.ult_cost)
+            self._sync_ult_slot()
 
     def snapshot(self) -> list[dict]:
         return [
-            {"name": s.ability.name, "charges": s.charges_left, "cooldown": s.cooldown_left}
-            for s in self.slots
+            {"name": s.ability.name, "charges": s.charges_left, "cooldown": s.cooldown_left,
+             "ultimate": i == self._ult_idx}
+            for i, s in enumerate(self.slots)
         ]
+
+    def ult_snapshot(self) -> dict:
+        return {"points": int(self.ult_points), "cost": int(self.ult_cost),
+                "ready": self.ult_ready(), "index": int(self._ult_idx)}
+
+    # ---- 傳輸用緊湊表示（ABILITY_STATE 封包，8 bytes/人）---- #
+    def wire_tuple(self) -> tuple:
+        """(cd0..cd3, ult_points, ult_cost, charges_packed, flags)。"""
+        cds = [int(min(25.5, s.cooldown_left) * 10.0) for s in self.slots[:4]]
+        cds += [0] * (4 - len(cds))
+        charges = 0
+        for i, s in enumerate(self.slots[:4]):
+            charges |= min(3, max(0, s.charges_left)) << (i * 2)
+        flags = 0
+        if self.ult_ready():
+            flags |= 1
+        if not self.can_use_any():
+            flags |= 2          # 被 KAY/O 壓制
+        return (cds[0], cds[1], cds[2], cds[3],
+                min(15, self.ult_points), min(15, self.ult_cost), charges, flags)
+
+    def can_use_any(self) -> bool:
+        return any(s.charges_left > 0 for s in self.slots)
 
 
 # ====================================================================== #

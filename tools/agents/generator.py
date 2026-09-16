@@ -19,8 +19,21 @@ from dataclasses import dataclass, field
 
 from server.game.abilities import GENERATED_AGENTS, build_ability
 
-# 技能池（遊戲內實際存在）
-KNOWN_ABILITIES = ("flash", "frag", "smoke", "trap", "stim", "heal")
+# 一般技能池（遊戲內實際存在）
+_BASE_ABILITIES = ("flash", "frag", "smoke", "trap", "stim", "heal")
+
+# 終點球池：這些類別本身 `is_ultimate=True` → 註冊後自動受伺服器充能門控
+# （見 server/game/abilities.py::AbilitySystem.add_ult_points / wire_tuple）
+ULT_POOL: dict[str, dict] = {
+    "thrown_knife": {"label": "刃暴", "cost": 8},
+    "hunter_fury": {"label": "猎魂之怒", "cost": 7},
+    "earthquake": {"label": "震地", "cost": 8},
+    "electric_beam": {"label": "奔流光矛", "cost": 7},
+    "viper_pit": {"label": "毒蝰之巢", "cost": 8},
+}
+
+# 匯出的 roster 用的完整技能池（驗證器以此為準）
+KNOWN_ABILITIES = _BASE_ABILITIES + tuple(ULT_POOL)
 
 # 角色定位模板
 ROLES: dict[str, dict] = {
@@ -28,22 +41,22 @@ ROLES: dict[str, dict] = {
         label="決鬥者", desc="先鋒突破，單兵作戰的尖刀",
         speed_mult=1.03, shield_pref="light", glyph="flash",
         kits=[["flash", "stim", "frag"], ["stim", "flash", "frag"], ["flash", "stim", "stim"]],
-    ),
+        ults=["thrown_knife", "electric_beam"]),
     "controller": dict(
         label="控場者", desc="以煙霧與封鎖主宰戰場節奏",
         speed_mult=0.99, shield_pref="heavy", glyph="smoke",
         kits=[["smoke", "smoke", "frag"], ["smoke", "trap", "smoke"]],
-    ),
+        ults=["earthquake", "viper_pit"]),
     "sentinel": dict(
         label="哨衛", desc="陣地防守與關鍵時刻的後盾",
         speed_mult=0.98, shield_pref="heavy", glyph="trap",
         kits=[["trap", "heal", "smoke"], ["heal", "trap", "frag"], ["trap", "heal", "stim"]],
-    ),
+        ults=["viper_pit", "earthquake"]),
     "initiator": dict(
         label="先鋒", desc="情報壓制與開戰的發動機",
         speed_mult=1.0, shield_pref="light", glyph="spark",
         kits=[["flash", "frag", "stim"], ["frag", "flash", "smoke"], ["flash", "stim", "trap"]],
-    ),
+        ults=["hunter_fury", "electric_beam"]),
 }
 
 # 代號零件池（可無限組合，批內唯一）
@@ -79,6 +92,9 @@ class AgentDef:
     stats: dict
     colors: dict
     seed: int
+    # 終點球（kit 的第 4 槽）；有預設值的欄位必須排在 seed 之後（dataclass 規則）
+    ult: str = ""
+    ult_cost: int = 8
 
     def to_dict(self) -> dict:
         return {
@@ -86,6 +102,10 @@ class AgentDef:
             "faction": self.faction, "role": self.role, "role_label": self.role_label,
             "desc": self.desc, "bio": self.bio, "kit": list(self.kit),
             "stats": dict(self.stats), "colors": dict(self.colors), "seed": self.seed,
+            # 客戶端（agent_gallery / agent_select）靠這兩欄畫四格技能條與終點球花樣
+            "slots": ["C", "Q", "E", "X"],
+            "ultimate": {"key": self.ult, "label": ULT_POOL.get(self.ult, {}).get("label", ""),
+                         "cost": self.ult_cost},
         }
 
 
@@ -158,6 +178,9 @@ def generate_agent(seed: int, role: str | None = None, used: set[str] | None = N
     name = f"{rng.choice(FIRST_NAMES)} {rng.choice(LAST_NAMES)}"
     faction = rng.choice(FACTIONS)
     kit = list(rng.choice(tpl["kits"]))
+    # 第 4 槽＝終點球（依定位從池裡確定性選一把）
+    ult = rng.choice(tpl["ults"])
+    kit.append(ult)
     stats = {
         "hp": 100,
         "speed_mult": tpl["speed_mult"],
@@ -169,6 +192,7 @@ def generate_agent(seed: int, role: str | None = None, used: set[str] | None = N
         key=key, codename=codename, name=name, faction=faction,
         role=role, role_label=tpl["label"], desc=tpl["desc"], bio=bio,
         kit=kit, stats=stats, colors=make_palette(seed), seed=seed,
+        ult=ult, ult_cost=int(ULT_POOL[ult]["cost"]),
     )
 
 
@@ -194,6 +218,17 @@ def validate_agent(d: dict) -> list[str]:
         for ab in d["kit"]:
             if ab not in KNOWN_ABILITIES:
                 issues.append(f"未知技能: {ab}")
+        # 四槽（C/Q/E/X）且第四槽是終點球——這是對齊《特戰英豪》的硬契約
+        if len(d["kit"]) != 4:
+            issues.append(f"技能應為 4 槽（C/Q/E/X）：{len(d['kit'])}")
+        elif d["kit"][3] not in ULT_POOL:
+            issues.append(f"第 4 槽必須是終點球，却是: {d['kit'][3]}")
+    if "ultimate" in d:
+        u = d["ultimate"]
+        if not isinstance(u, dict) or u.get("key") not in ULT_POOL:
+            issues.append("ultimate 欄位不完整或指向未知終點球")
+        elif not (6 <= int(u.get("cost", 0)) <= 9):
+            issues.append(f"ultimate.cost 超出 6..9: {u.get('cost')}")
     st = d.get("stats", {})
     if "hp" in st and st["hp"] != 100:
         issues.append(f"hp 應為 100: {st['hp']}")

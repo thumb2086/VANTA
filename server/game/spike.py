@@ -117,6 +117,9 @@ class SpikeController:
             if self.plant_progress >= PLANT_TIME:
                 self.state = SpikeState.PLANTED
                 self.fuse = FUSE_TIME
+                # 終點球：安放 +1（只給安放者）
+                from server.game.entities import ULT_POINTS_SPIKE
+                self.world.award_ult(self.planter_slot, ULT_POINTS_SPIKE, "plant")
                 # 攻方全員 +300（含計畫手；不含已死亡）
                 attacker_team = planter.team
                 for pl in self.world.players:
@@ -151,6 +154,8 @@ class SpikeController:
             self.defuse_progress += dt
             if self.defuse_progress >= DEFUSE_TIME:
                 self.state = SpikeState.DEFUSED
+                from server.game.entities import ULT_POINTS_SPIKE
+                self.world.award_ult(self.defuser_slot, ULT_POINTS_SPIKE, "defuse")
 
     # ------------------------------------------------------------------ #
     def _spike_pos(self) -> Vec3:

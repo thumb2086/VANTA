@@ -6,11 +6,12 @@
   "role": "sentinel",
   "role_label": "哨衛",
   "desc": "陣地防守與關鍵時刻的後盾",
-  "bio": "陣地防守與關鍵時刻的後盾。擅長聲東擊西。代號「Shadeara」，隸屬 NIGHTFALL。",
+  "bio": "陣地防守與關鍵時刻的後盾。以快狠準聞名。代號「Shadeara」，隸屬 NIGHTFALL。",
   "kit": [
     "trap",
     "heal",
-    "stim"
+    "stim",
+    "viper_pit"
   ],
   "stats": {
     "hp": 100,
@@ -24,5 +25,16 @@
     "bg1": "#3b162c",
     "bg2": "#0a1e12"
   },
-  "seed": 193
+  "seed": 193,
+  "slots": [
+    "C",
+    "Q",
+    "E",
+    "X"
+  ],
+  "ultimate": {
+    "key": "viper_pit",
+    "label": "毒蝰之巢",
+    "cost": 8
+  }
 }

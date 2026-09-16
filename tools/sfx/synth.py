@@ -162,6 +162,49 @@ def explosion() -> list[float]:
 # --------------------------------------------------------------------- #
 # 技能
 # --------------------------------------------------------------------- #
+def ult_ready_chime() -> list[float]:
+    """終點球就緒：三音上行鐘聲（G→B→E），短、亮、不蓋槍聲。
+
+    注意：這兩個音效**不碰全域隨機流**（`_rng`）。`cmd_sfx` 依 key 排序產生並共用
+    同一條流，若新鍵中途取用隨機數，字串排序在它後面的音效會跟著漂移位元組
+    （real case：venom_shot）。所以這裡自備定種子 rng。
+    """
+    import math
+
+    total = int(0.5 * SAMPLE_RATE)
+    out = [0.0] * total
+    for freq, start, dur in ((784.0, 0.00, 0.22), (988.0, 0.07, 0.22), (1318.5, 0.14, 0.30)):
+        off = int(start * SAMPLE_RATE)
+        n = min(int(dur * SAMPLE_RATE), total - off)
+        for i in range(n):
+            t = i / SAMPLE_RATE
+            env = math.exp(-6.5 * t)
+            # 基頻 + 二次泛音 → 有「鐘」的質感而不是純音
+            out[off + i] += 0.30 * env * (math.sin(math.tau * freq * t)
+                                          + 0.25 * math.sin(math.tau * freq * 2.0 * t))
+    return [max(-1.0, min(1.0, v)) for v in out]
+
+
+def ult_cast() -> list[float]:
+    """終點球施放：低頻隆隆 + 58Hz 次聲 + 高頻閃音（有重量但不長時間壓槍聲）。"""
+    import math
+
+    n = int(0.75 * SAMPLE_RATE)
+    out = [0.0] * n
+    rng = random.Random(0xCA57)
+    body = envelope_exp(lowpass([rng.uniform(-1.0, 1.0) for _ in range(int(0.5 * SAMPLE_RATE))],
+                               260.0), 7.0)
+    for i, v in enumerate(body):
+        out[i] += 0.55 * v
+    for i in range(int(0.45 * SAMPLE_RATE)):
+        t = i / SAMPLE_RATE
+        out[i] += 0.5 * math.exp(-6.0 * t) * math.sin(math.tau * 58.0 * t)
+    for i in range(int(0.3 * SAMPLE_RATE)):
+        t = i / SAMPLE_RATE
+        out[i] += 0.18 * math.exp(-12.0 * t) * math.sin(math.tau * 2100.0 * t)
+    return [max(-1.0, min(1.0, v)) for v in out]
+
+
 def ability_cast() -> list[float]:
     """技能施放：上升滑音。"""
     import math
@@ -423,4 +466,7 @@ SFX_REGISTRY: dict[str, callable] = {
     "katana_swing": (lambda s="katana_swing": skin_shot(s)),
     "knife_swing": knife_swing,
     "knife_hit": knife_hit,
+    # 終點球（新增鍵一律加在尾端：合成共用隨機流，插在中間會改到後面所有音效的位元組）
+    "ult_ready_chime": ult_ready_chime,
+    "ult_cast": ult_cast,
 }

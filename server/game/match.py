@@ -280,6 +280,11 @@ class Match:
         self.loss_streak[1 - winner] += 1
         self.round_records.append(RoundRecord(self.round, winner, reason))
         self.event_log.append(f"round{self.round} -> team{winner} wins ({reason})")
+        # 終點球：敗方每人 +1（贏方不給，靠擊殺/助攻/安放自己挣）
+        from server.game.entities import ULT_POINTS_ROUND_LOSS
+        for _i, _pl in enumerate(self.world.players):
+            if _pl.team != winner:
+                self.world.award_ult(_i, ULT_POINTS_ROUND_LOSS, "round_loss")
 
     def _settle_and_next_round(self) -> None:
         # 經濟結算（依模式）

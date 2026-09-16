@@ -24,7 +24,8 @@ const SNAPSHOT_HEADER := 10
 const SNAPSHOT_ENTRY := 26
 const MAX_SLOTS := 10
 const SNAPSHOT_SIZE := SNAPSHOT_HEADER + MAX_SLOTS * SNAPSHOT_ENTRY
-const ABILITY_STATE_SIZE := 6 + MAX_SLOTS * 4  # 4 bytes per player
+const ABILITY_ENTRY_SIZE := 8                    # 每人 8 bytes（與 protocol.py 同步）
+const ABILITY_STATE_SIZE := 6 + MAX_SLOTS * ABILITY_ENTRY_SIZE
 const WORLD_STATE_HEADER := 8
 const WORLD_STATE_SMOKE_ENTRY := 14
 const MAX_WORLD_SMOKES := 8
@@ -91,6 +92,8 @@ var match_spike_state := 0
 var match_spike_fuse := 0
 var match_credits: Array = []  # 每槽位 credits
 var ability_cooldowns: Array = []  # 10 × 4 技能冷卻（秒）
+var ability_charges: Array = []    # 10 × 4 剩餘使用次數
+var ability_ult: Array = []        # 10 × {points, cost, ready, blocked}
 ## 世界狀態：煙霧列表 [{pos: Vector3, radius: float, time_left: float, team: int}]
 var world_smokes: Array = []
 ## 閃光致盲事件隊列（main 消費）：{tick, intensity}
@@ -572,16 +575,29 @@ func _parse_match_state(data: PackedByteArray) -> void:
 
 
 func _parse_ability_state(data: PackedByteArray) -> void:
-	# 0x07 ABILITY_STATE（46B）：各玩家技能冷卻
+	# 0x07 ABILITY_STATE（86B）：每人 8 bytes
+	#   +0..3 冷卻(0.1s) | +4 終點球點數 | +5 所需點數 | +6 使用次數(2bits/槽) | +7 旗標
 	if data.size() < ABILITY_STATE_SIZE:
 		return
 	ability_cooldowns.clear()
+	ability_charges.clear()
+	ability_ult.clear()
 	for slot in range(MAX_SLOTS):
-		var off := 6 + slot * 4
+		var off := 6 + slot * ABILITY_ENTRY_SIZE
 		var cds := []
 		for a in range(4):
-			cds.append(data[off + a] / 10.0)
+			cds.append(float(data[off + a]) / 10.0)
 		ability_cooldowns.append(cds)
+		var packed := data[off + 6]
+		var ch := []
+		for i in range(4):
+			ch.append((packed >> (i * 2)) & 3)
+		ability_charges.append(ch)
+		var flags := data[off + 7]
+		ability_ult.append({
+			"points": data[off + 4], "cost": data[off + 5],
+			"ready": (flags & 1) != 0, "blocked": (flags & 2) != 0,
+		})
 
 
 func _parse_world_state(data: PackedByteArray) -> void:

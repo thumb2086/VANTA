@@ -46,6 +46,7 @@ var _recoil_key := ""
 var _fire_held := false
 var _auto_next := 0.0
 var _burst_left := 0
+var _ult_was_ready := false
 var _last_mouse := Vector2.ZERO
 var _footstep_timer := 0.0
 var _score_atk := 0
@@ -432,6 +433,82 @@ func _read_input() -> Dictionary:
 	}
 
 
+## 技能索引 → vfx2 藍圖 id（tools/vfx/blueprints.py 的 ability_* 家族）
+func _ability_blueprint(index: int) -> String:
+	match index:
+		0:
+			return "ability_smoke"
+		1:
+			return "ability_flash"
+		2:
+			return "ability_frag"
+		_:
+			return "ability_dash"
+
+
+## 終點球：把权威封包裡的 {points, cost, ready} 套到 HUD，並在 ready 的上升沿給回饋
+func _sync_ult(state: Dictionary) -> void:
+	var pts := int(state.get("points", 0))
+	var cost := int(state.get("cost", 0))
+	var ready := bool(state.get("ready", false))
+	hud.set_ult(pts, cost, ready, bool(state.get("blocked", false)))
+	if ready and not _ult_was_ready:
+		_ult_was_ready = true
+		audio_mgr.play_synth("ult_ready_chime", 1.0, -4.0)
+		hud.announce("終點球就緒 — 按 X", Color(1.0, 0.8, 0.25))
+		# 藍圖自帶 audio（tools/vfx/blueprints.py）→ 有 fx2 時不重複播音效
+		if fx2 != null:
+			fx2.play("ult_ready", {"impact": cam.global_position + Vector3(0, -0.45, 0),
+					"scale": 1.0})
+		else:
+			audio_mgr.play_synth("ult_ready_chime", 1.0, -4.0)
+	elif not ready and _ult_was_ready:
+		_ult_was_ready = false
+
+
+## 一般技能：本地只做「次數/冷卻」顯示與攔截提示，能不能放仍由伺服器決定
+func _cast_ability(index: int, label: String) -> void:
+	var left := 0
+	if hud.ability_charges.size() > index:
+		left = int(hud.ability_charges[index])
+	if left <= 0 and hud.ability_cooldowns[index] <= 0.0:
+		# 沒有使用次數且不在冷卻 → 真的放不出來（伺服器也會拒），給個清楚的提示
+		audio_mgr.play_synth("ui_error", 1.0, -12.0)
+		hud.announce("技能 %s 沒有可用次數" % label, Color(1.0, 0.5, 0.35))
+		return
+	net.send_action(NetClient.ACTION_ABILITY, index,
+			int(_yaw * 100), int(_pitch * 100), net.own_last_seq)
+	var fwd2: Vector3 = -cam.global_transform.basis.z
+	if fx2 != null:
+		fx2.play(_ability_blueprint(index), {"impact": cam.global_position + fwd2 * 2.0,
+				"dir": fwd2, "scale": 1.0})
+	else:
+		audio_mgr.play_synth("ability_cast", 1.0 + 0.06 * float(index), -8.0)
+	if left > 1:
+		hud.announce("技能 %s 發動（剩 %d）" % [label, left - 1], Color(0.3, 0.9, 1.0))
+	else:
+		hud.announce("技能 %s 發動！" % label, Color(0.3, 0.9, 1.0))
+
+
+## 施放終點球（X）：本地只做「還沒充能就別發包」的閘門，判定仍歸伺服器
+func _try_cast_ult() -> void:
+	if not hud.ult_ready:
+		audio_mgr.play_synth("ui_error", 1.0, -10.0)
+		hud.announce("終點球尚未就緒  %d / %d" % [hud.ult_points, maxi(1, hud.ult_cost)],
+			Color(1.0, 0.45, 0.35))
+		return
+	net.send_action(NetClient.ACTION_ABILITY, 3,
+			int(_yaw * 100), int(_pitch * 100), net.own_last_seq)
+	screen_fx.add_trauma(0.22)
+	var fwd := -cam.global_transform.basis.z
+	if fx2 != null:
+		fx2.play("ult_cast", {"impact": cam.global_position + fwd * 1.2, "dir": fwd,
+				"scale": 1.25})
+	else:
+		audio_mgr.play_synth("ult_cast", 1.0, -2.0)
+	_ult_was_ready = false   # 等下一個权威包確認；避免同一幀重複觸發
+
+
 func _now() -> float:
 	return float(Time.get_ticks_msec()) / 1000.0
 
@@ -600,25 +677,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_3:
 				net.send_action(NetClient.ACTION_SWITCH, 2, 0, 0, net.own_last_seq)
 			KEY_Q:
-				# Q 鍵：技能 1（index 1）
-				net.send_action(NetClient.ACTION_ABILITY, 1,
-					int(_yaw * 100), int(_pitch * 100), net.own_last_seq)
-				hud.announce("技能 Q 發動！", Color(0.3, 0.9, 1.0))
+				_cast_ability(1, "Q")
 			KEY_E:
-				# E 鍵：技能 2（index 2）
-				net.send_action(NetClient.ACTION_ABILITY, 2,
-					int(_yaw * 100), int(_pitch * 100), net.own_last_seq)
-				hud.announce("技能 E 發動！", Color(0.3, 0.9, 1.0))
+				_cast_ability(2, "E")
 			KEY_C:
-				# C 鍵：技能 0（index 0）
-				net.send_action(NetClient.ACTION_ABILITY, 0,
-					int(_yaw * 100), int(_pitch * 100), net.own_last_seq)
-				hud.announce("技能 C 發動！", Color(0.3, 0.9, 1.0))
+				_cast_ability(0, "C")
 			KEY_X:
-				# X 鍵：終極技能（index 3）
-				net.send_action(NetClient.ACTION_ABILITY, 3,
-					int(_yaw * 100), int(_pitch * 100), net.own_last_seq)
-				hud.announce("🔥 終極技能 發動！", Color(1.0, 0.5, 0.1))
+				_try_cast_ult()   # 終點球：需充能滿（權威在伺服器，這裡只擋掉明顯無效的按鍵）
 			KEY_R:
 				net.send_action(NetClient.ACTION_RELOAD, 0, 0, 0, net.own_last_seq)
 			KEY_Y:
@@ -998,11 +1063,23 @@ func _update_hud(delta: float) -> void:
 	# 金錢
 	if net.match_credits.size() > net.slot and net.slot >= 0:
 		hud.credits = int(net.match_credits[net.slot])
-	# 技能冷卻
+	# 技能冷卻／使用次數／終點球（权威值來自 0x07 ABILITY_STATE，每秒一包）
 	if net.ability_cooldowns.size() > net.slot and net.slot >= 0:
 		var my_cds: Array = net.ability_cooldowns[net.slot]
 		for i in range(mini(4, my_cds.size())):
-			hud.ability_cooldowns[i] = my_cds[i]
+			var cd: float = float(my_cds[i])
+			hud.ability_cooldowns[i] = cd
+			# 最大冷卻從「實際見到的第一個值」推得，不再寫死 [10,10,0,0]
+			if cd > 0.0 and cd > float(hud.ability_max_cds[i]):
+				hud.ability_max_cds[i] = cd
+		if net.ability_charges.size() > net.slot:
+			hud.ability_charges = (net.ability_charges[net.slot] as Array).duplicate()
+		if net.ability_ult.size() > net.slot:
+			_sync_ult(net.ability_ult[net.slot])
+		else:
+			var me2: Dictionary = net.players.get(net.slot, {})
+			if me2.has("ult"):
+				_sync_ult(me2["ult"])
 	# Spike 狀態
 	var spike_names := {0: "", 1: "安放中...", 2: "已安放", 3: "拆除中...", 4: "爆炸!", 5: "已拆除"}
 	var spike_txt: String = spike_names.get(net.match_spike_state, "")

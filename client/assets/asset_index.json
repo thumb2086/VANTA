@@ -47,6 +47,8 @@
     "res://assets/sfx/ui_buy.wav",
     "res://assets/sfx/ui_click.wav",
     "res://assets/sfx/ui_error.wav",
+    "res://assets/sfx/ult_cast.wav",
+    "res://assets/sfx/ult_ready_chime.wav",
     "res://assets/sfx/venom_shot.wav"
   ],
   "bgm": [
@@ -112,21 +114,33 @@
     "res://assets/agents/blitzel.json",
     "res://assets/agents/frostus.json",
     "res://assets/agents/havocix.json",
+    "res://assets/agents/novayn.json",
     "res://assets/agents/nyxeth.json",
     "res://assets/agents/onyxyn.json",
+    "res://assets/agents/rogueor.json",
     "res://assets/agents/runear.json",
     "res://assets/agents/shadeara.json",
-    "res://assets/agents/umbraus.json"
+    "res://assets/agents/umbrael.json",
+    "res://assets/agents/umbraix.json",
+    "res://assets/agents/umbraus.json",
+    "res://assets/agents/vexara.json",
+    "res://assets/agents/vortexeth.json"
   ],
   "agent_portraits": [
     "res://assets/agents/portraits/blitzel.svg",
     "res://assets/agents/portraits/frostus.svg",
     "res://assets/agents/portraits/havocix.svg",
+    "res://assets/agents/portraits/novayn.svg",
     "res://assets/agents/portraits/nyxeth.svg",
     "res://assets/agents/portraits/onyxyn.svg",
+    "res://assets/agents/portraits/rogueor.svg",
     "res://assets/agents/portraits/runear.svg",
     "res://assets/agents/portraits/shadeara.svg",
-    "res://assets/agents/portraits/umbraus.svg"
+    "res://assets/agents/portraits/umbrael.svg",
+    "res://assets/agents/portraits/umbraix.svg",
+    "res://assets/agents/portraits/umbraus.svg",
+    "res://assets/agents/portraits/vexara.svg",
+    "res://assets/agents/portraits/vortexeth.svg"
   ],
   "fx": [
     "res://assets/fx/event_bindings.json",

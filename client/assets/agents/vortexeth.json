@@ -1,15 +1,15 @@
 {
-  "key": "frostus",
-  "codename": "Frostus",
-  "name": "Dara Tanaka",
-  "faction": "SHADOWLINE",
+  "key": "vortexeth",
+  "codename": "Vortexeth",
+  "name": "Omar Nguyen",
+  "faction": "TEMPEST",
   "role": "duelist",
   "role_label": "決鬥者",
   "desc": "先鋒突破，單兵作戰的尖刀",
-  "bio": "先鋒突破，單兵作戰的尖刀。行動如幽靈般無聲。代號「Frostus」，隸屬 SHADOWLINE。",
+  "bio": "先鋒突破，單兵作戰的尖刀。總能在絕境冷靜收尾。代號「Vortexeth」，隸屬 TEMPEST。",
   "kit": [
-    "stim",
     "flash",
+    "stim",
     "frag",
     "electric_beam"
   ],
@@ -20,12 +20,12 @@
     "role_glyph": "flash"
   },
   "colors": {
-    "primary": "#cbe236",
-    "accent": "#5ff04b",
-    "bg1": "#363b16",
-    "bg2": "#0c0a1e"
+    "primary": "#e2369c",
+    "accent": "#f0654b",
+    "bg1": "#3b162c",
+    "bg2": "#0a1e12"
   },
-  "seed": 100,
+  "seed": 441,
   "slots": [
     "C",
     "Q",

@@ -73,7 +73,8 @@ INPUT_PACKET_SIZE = 15
 ACTION_PACKET_SIZE = 19
 GAME_EVENT_PACKET_SIZE = 16
 MATCH_STATE_PACKET_SIZE = 36
-ABILITY_STATE_PACKET_SIZE = 6 + MAX_SLOTS * 4  # 4 bytes per player (4 cooldowns)
+ABILITY_STATE_ENTRY_SIZE = 8   # 每人 8 bytes（見 AbilityStatePacket 佈局）
+ABILITY_STATE_PACKET_SIZE = 6 + MAX_SLOTS * ABILITY_STATE_ENTRY_SIZE
 # 0x09 WORLD_STATE：header 6B + count u8 + reserved u8 + max 8 煙霧 × 14B = 6 + 2 + 112 = 120
 WORLD_STATE_HEADER_SIZE = 8
 WORLD_STATE_SMOKE_ENTRY_SIZE = 14
@@ -475,9 +476,21 @@ class MatchStatePacket:
 
 @dataclass(frozen=True, slots=True)
 class AbilityStatePacket:
-    """0x07 ABILITY_STATE — 伺服器每秒廣播各玩家技能冷卻。"""
+    """0x07 ABILITY_STATE — 伺服器廣播各玩家的技能狀態（每秒；含終點球充能）。
+
+    為什麼放這個封包而不是 SnapshotPacket：後座/命中是 20Hz 熱路徑且已被 parity 鎖死，
+    而技能充能變化很慢（擊殺才 +2），塞進 snapshot 會把每 tick 的位元組數放大 40 倍。
+    這裡是「狀態」而非「事件」→ 遺失一個封包也只延遲 1 秒更新，不會錯值。
+
+    每人 8 bytes（header 6B 之後，依 slot 排列）：
+        +0..3  四槽冷卻剩餘（0.1s 單位，上限 25.5s）—— 與舊版語意完全相同
+        +4     終點球點數（0..15）
+        +5     終點球所需點數（0 = 這角沒有終點球）
+        +6     各槽剩餘使用次數，2 bits/槽（bit0-1=Q, 2-3=E, 4-5=C, 6-7=X）
+        +7     旗標：bit0 終點球就緒、bit1 技能被壓制（KAY/O 致盲式封鎖）
+    """
     server_tick: int
-    cooldowns: tuple  # 10 tuples of 4 floats (seconds)
+    states: tuple  # 10 × 8 個 int
 
     def encode(self) -> bytes:
         data = bytearray(ABILITY_STATE_PACKET_SIZE)
@@ -485,12 +498,10 @@ class AbilityStatePacket:
         data[1] = TYPE_ABILITY_STATE
         struct.pack_into("<I", data, 2, self.server_tick & 0xFFFFFFFF)
         for slot in range(MAX_SLOTS):
-            cd = self.cooldowns[slot] if slot < len(self.cooldowns) else (0.0,) * 4
-            off = 6 + slot * 4
-            for a in range(4):
-                val = cd[a] if a < len(cd) else 0.0
-                # 0.1s resolution, max 25.5s
-                data[off + a] = clamp(int(val * 10.0), 0, 255) & 0xFF
+            st = self.states[slot] if slot < len(self.states) else (0,) * ABILITY_STATE_ENTRY_SIZE
+            off = 6 + slot * ABILITY_STATE_ENTRY_SIZE
+            for a in range(ABILITY_STATE_ENTRY_SIZE):
+                data[off + a] = int(st[a] if a < len(st) else 0) & 0xFF
         return bytes(data)
 
     @staticmethod
@@ -498,12 +509,25 @@ class AbilityStatePacket:
         if len(data) != ABILITY_STATE_PACKET_SIZE or data[0] != MAGIC or data[1] != TYPE_ABILITY_STATE:
             return None
         tick = struct.unpack_from("<I", data, 2)[0]
-        cooldowns = []
+        states = []
         for slot in range(MAX_SLOTS):
-            off = 6 + slot * 4
-            cd = tuple(data[off + a] / 10.0 for a in range(4))
-            cooldowns.append(cd)
-        return AbilityStatePacket(tick, tuple(cooldowns))
+            off = 6 + slot * ABILITY_STATE_ENTRY_SIZE
+            states.append(tuple(data[off + a] for a in range(ABILITY_STATE_ENTRY_SIZE)))
+        return AbilityStatePacket(tick, tuple(states))
+
+    # ---- 客戶端友善取窗 ---- #
+    @staticmethod
+    def cooldowns_of(entry: tuple) -> tuple[float, ...]:
+        return tuple(entry[a] / 10.0 for a in range(4))
+
+    @staticmethod
+    def charges_of(entry: tuple) -> tuple[int, ...]:
+        return tuple((entry[6] >> (i * 2)) & 0x3 for i in range(4))
+
+    @staticmethod
+    def ult_of(entry: tuple) -> tuple[int, int, bool, bool]:
+        """(點數, 所需, 就緒, 被壓制)。"""
+        return (entry[4], entry[5], bool(entry[7] & 1), bool(entry[7] & 2))
 
 
 @dataclass(frozen=True, slots=True)

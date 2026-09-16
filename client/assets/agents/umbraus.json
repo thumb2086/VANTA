@@ -6,11 +6,12 @@
   "role": "controller",
   "role_label": "控場者",
   "desc": "以煙霧與封鎖主宰戰場節奏",
-  "bio": "以煙霧與封鎖主宰戰場節奏。信奉先發制人。代號「Umbraus」，隸屬 VANGUARD。",
+  "bio": "以煙霧與封鎖主宰戰場節奏。行動如幽靈般無聲。代號「Umbraus」，隸屬 VANGUARD。",
   "kit": [
     "smoke",
     "smoke",
-    "frag"
+    "frag",
+    "viper_pit"
   ],
   "stats": {
     "hp": 100,
@@ -24,5 +25,16 @@
     "bg1": "#363b16",
     "bg2": "#0d0a1e"
   },
-  "seed": 224
+  "seed": 224,
+  "slots": [
+    "C",
+    "Q",
+    "E",
+    "X"
+  ],
+  "ultimate": {
+    "key": "viper_pit",
+    "label": "毒蝰之巢",
+    "cost": 8
+  }
 }

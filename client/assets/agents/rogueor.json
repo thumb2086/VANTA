@@ -1,12 +1,12 @@
 {
-  "key": "frostus",
-  "codename": "Frostus",
-  "name": "Dara Tanaka",
-  "faction": "SHADOWLINE",
+  "key": "rogueor",
+  "codename": "Rogueor",
+  "name": "Mira Silva",
+  "faction": "ASGARD-9",
   "role": "duelist",
   "role_label": "決鬥者",
   "desc": "先鋒突破，單兵作戰的尖刀",
-  "bio": "先鋒突破，單兵作戰的尖刀。行動如幽靈般無聲。代號「Frostus」，隸屬 SHADOWLINE。",
+  "bio": "先鋒突破，單兵作戰的尖刀。擅長聲東擊西。代號「Rogueor」，隸屬 ASGARD-9。",
   "kit": [
     "stim",
     "flash",
@@ -20,12 +20,12 @@
     "role_glyph": "flash"
   },
   "colors": {
-    "primary": "#cbe236",
-    "accent": "#5ff04b",
-    "bg1": "#363b16",
-    "bg2": "#0c0a1e"
+    "primary": "#36e2a4",
+    "accent": "#4bb0f0",
+    "bg1": "#163b2d",
+    "bg2": "#1e0a11"
   },
-  "seed": 100,
+  "seed": 410,
   "slots": [
     "C",
     "Q",

@@ -45,6 +45,13 @@ def _set_agent(w, slot, key):
     w.players[slot].abilities = AbilitySystem(list(lookup_agent(key)[1]))
 
 
+def _arm_ult(w, slot: int) -> None:
+    """給終點球充能（X 槽現在受充能門控，見 tests/test_ult_charge.py）。"""
+    ab = w.players[slot].abilities
+    if ab.ult_index >= 0:
+        ab.add_ult_points(ab.ult_cost)
+
+
 def _place_enemy(w, slot, z=5.0, x=0.0):
     """將敵方玩家放在施法者前方。"""
     w.players[slot].pos = Vec3(x, 0, z)
@@ -118,6 +125,7 @@ class TestDuelistAbilities:
         w = _world()
         _set_agent(w, 0, "jett")
         before = len(w.projectiles)
+        _arm_ult(w, 0)
         w.cast_ability(0, 3, 0, 0)  # X Blade Storm
         assert len(w.projectiles) == before + 5  # 5 把飛刀
 
@@ -132,6 +140,7 @@ class TestDuelistAbilities:
     def test_yoru_invisibility_gives_speed_boost(self):
         w = _world()
         _set_agent(w, 0, "yoru")
+        _arm_ult(w, 0)
         w.cast_ability(0, 3, 0, 0)  # X Dimensional Drift
         assert w.players[0].status.has(SPEED_BOOST)
 
@@ -146,6 +155,7 @@ class TestDuelistAbilities:
         _set_agent(w, 0, "neon")
         _place_enemy(w, 5, z=10)
         hp_before = w.players[5].health
+        _arm_ult(w, 0)
         w.cast_ability(0, 3, 0, 0)  # X Lightning Ult (z=1)
         assert w.players[5].health < hp_before
 
@@ -175,6 +185,7 @@ class TestInitiatorAbilities:
         _set_agent(w, 0, "sova")
         _place_enemy(w, 5, z=20)
         hp = w.players[5].health
+        _arm_ult(w, 0)
         w.cast_ability(0, 3, 0, 0)  # X Hunter's Fury
         assert w.players[5].health < hp
 
@@ -191,6 +202,7 @@ class TestInitiatorAbilities:
         _place_enemy(w, 5, z=10)
         _place_enemy(w, 6, z=12, x=3)
         _place_enemy(w, 7, z=12, x=-3)
+        _arm_ult(w, 0)
         w.cast_ability(0, 3, 0, 0)  # X Earthquake
         assert w.players[5].status.has(CONCUSS)
         assert w.players[6].status.has(CONCUSS)
@@ -200,6 +212,7 @@ class TestInitiatorAbilities:
         w = _world()
         _set_agent(w, 0, "kayo")
         _place_enemy(w, 5, z=5)
+        _arm_ult(w, 0)
         w.cast_ability(0, 3, 0, 0)  # X NULL/cmd
         assert w.players[5].status.has(SUPPRESSED)
 
@@ -247,6 +260,7 @@ class TestControllerAbilities:
         w = _world()
         _set_agent(w, 0, "brimstone")
         _place_enemy(w, 5, z=5)
+        _arm_ult(w, 0)
         w.cast_ability(0, 3, 0, 0)  # X Orbital Strike
         hp = w.players[5].health
         # orbital strike has 2.0s delay → step enough ticks
@@ -266,6 +280,7 @@ class TestControllerAbilities:
         _set_agent(w, 0, "viper")
         _place_enemy(w, 5, z=3)
         before_smokes = len(w.smokes)
+        _arm_ult(w, 0)
         w.cast_ability(0, 3, 0, 0)  # X Viper's Pit
         assert len(w.smokes) > before_smokes
         assert w.players[5].status.has(DECAY)
@@ -303,6 +318,7 @@ class TestSentinelAbilities:
         _set_agent(w, 0, "sage")
         w.players[1].alive = False
         w.players[1].health = 0.0
+        _arm_ult(w, 0)
         w.cast_ability(0, 3, 0, 0)  # X Resurrection
         assert w.players[1].alive
         assert w.players[1].health == 100.0

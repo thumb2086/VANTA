@@ -6,11 +6,12 @@
   "role": "controller",
   "role_label": "控場者",
   "desc": "以煙霧與封鎖主宰戰場節奏",
-  "bio": "以煙霧與封鎖主宰戰場節奏。總能在絕境冷靜收尾。代號「Havocix」，隸屬 TEMPEST。",
+  "bio": "以煙霧與封鎖主宰戰場節奏。善用環境與掩體。代號「Havocix」，隸屬 TEMPEST。",
   "kit": [
     "smoke",
     "trap",
-    "smoke"
+    "smoke",
+    "viper_pit"
   ],
   "stats": {
     "hp": 100,
@@ -24,5 +25,16 @@
     "bg1": "#163b1a",
     "bg2": "#1e0a1c"
   },
-  "seed": 162
+  "seed": 162,
+  "slots": [
+    "C",
+    "Q",
+    "E",
+    "X"
+  ],
+  "ultimate": {
+    "key": "viper_pit",
+    "label": "毒蝰之巢",
+    "cost": 8
+  }
 }

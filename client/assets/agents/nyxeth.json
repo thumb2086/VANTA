@@ -10,7 +10,8 @@
   "kit": [
     "trap",
     "heal",
-    "stim"
+    "stim",
+    "earthquake"
   ],
   "stats": {
     "hp": 100,
@@ -24,5 +25,16 @@
     "bg1": "#16163b",
     "bg2": "#1e1e0a"
   },
-  "seed": 317
+  "seed": 317,
+  "slots": [
+    "C",
+    "Q",
+    "E",
+    "X"
+  ],
+  "ultimate": {
+    "key": "earthquake",
+    "label": "震地",
+    "cost": 8
+  }
 }

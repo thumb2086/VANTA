@@ -158,3 +158,25 @@
 - [x] 文件：`docs/10_gunplay_feel.md`
 - [ ] 尚未做：每角第 3/4 顆技能與終點球充能（需先定 snapshot/event 協定改法）、智慧 ping、
   訓練場首發準度計分
+
+## 追加（2026-09）：track 1 第 3 件 — 終點球充能（X 槽）
+- [x] **充能經濟**（`server/game/abilities.py` + `entities.py`）：擊殺 +2、助攻 +1、安放 +1、
+  拆除 +1、回合敗北每人 +1；上限 8、跨回合保留、放完歸零；`ult_cost` 可按角色 6..9
+- [x] **X 槽門控**：`AbilitySystem.add_ult_points/ult_ready/_spend_ult`，未滿連「使用次數」都不給；
+  只有標了 `is_ultimate` 的招生效 → AI 用的通用原型不受影響（不動平衡）
+- [x] **順手修 bug**：`_ENHANCED_DISPATCH`（Jett/Sage/Brimstone 強化技）**繞過** `can_cast()` →
+  可無限施放且不看充能；閘門上提為統一檢查
+- [x] **傳輸**：`AbilityStatePacket` 由 4 bytes/人 擴到 **8 bytes/人**（+終點球點數/所需/
+  使用次數 packed/旗標），整包 46B→86B；`SnapshotPacket` 270B **一字未動**、Rust 端 0 變動
+- [x] **客戶端**：`net_client.gd` 逐欄解析 → `main.gd` `_sync_ult/_try_cast_ult/_cast_ability` →
+  `hud.gd` 充能格 + 就緒呼吸光 + 被壓制遮罩；Q/E/C 提示改用真實剩餘次數；
+  最大冷卻由封包推得（不再寫死 `[10,10,0,0]`）
+- [x] **特效／音效**：`tools/vfx/blueprints.py` 新增 `ult_ready`/`ult_cast`（58→60 藍圖）；
+  `tools/sfx/synth.py` 新增 `ult_ready_chime`/`ult_cast`（48→50 鍵，且新鍵不碰全域隨機流，
+  避免相鄰音效位元組漂移）
+- [x] **產生器**：`tools/agents/generator.py` 每個定位補 `ults` 池 → 匯出 4 槽 +
+  `slots:["C","Q","E","X"]` + `ultimate:{key,label,cost}`；`validate_agent()` 變成硬契約
+- [x] 測試：`tests/test_ult_charge.py` **17 項**（含 GDScript 解析器逐運算式比對、
+  10 人封包對齊、壞包安全、RMS 包絡驗證）＋ `tests/test_tools_agents.py` 四槽契約 2 項
+- [x] 文件：`docs/11_ult_charge.md`
+- [ ] 尚未做：隊友就緒播報／VO、終點球角色專屬施放动作、訓練場首發準度計分、地圖升級

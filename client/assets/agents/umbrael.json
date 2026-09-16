@@ -1,16 +1,16 @@
 {
-  "key": "runear",
-  "codename": "Runear",
-  "name": "Mira Silva",
-  "faction": "IRONFANG",
+  "key": "umbrael",
+  "codename": "Umbrael",
+  "name": "Ivy Silva",
+  "faction": "SHADOWLINE",
   "role": "controller",
   "role_label": "控場者",
   "desc": "以煙霧與封鎖主宰戰場節奏",
-  "bio": "以煙霧與封鎖主宰戰場節奏。信奉先發制人。代號「Runear」，隸屬 IRONFANG。",
+  "bio": "以煙霧與封鎖主宰戰場節奏。對隊友絕對忠誠。代號「Umbrael」，隸屬 SHADOWLINE。",
   "kit": [
     "smoke",
+    "trap",
     "smoke",
-    "frag",
     "viper_pit"
   ],
   "stats": {
@@ -20,12 +20,12 @@
     "role_glyph": "smoke"
   },
   "colors": {
-    "primary": "#e2364c",
-    "accent": "#f0b14b",
-    "bg1": "#3b161b",
-    "bg2": "#0a1e1b"
+    "primary": "#5836e2",
+    "accent": "#e74bf0",
+    "bg1": "#1d163b",
+    "bg2": "#1a1e0a"
   },
-  "seed": 255,
+  "seed": 379,
   "slots": [
     "C",
     "Q",
